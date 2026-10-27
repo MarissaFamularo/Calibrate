@@ -1,37 +1,64 @@
 # Calibrate
 
-A proposed clinical simulation tool to help residents calibrate their trust in AI recommendations.
+**A simulation that teaches surgical residents when to trust an AI assistant and when to override it.**
 
-## Concept
+Built for the Meta Global AI Developer Hackathon (Oct 27 – Nov 4, 2026), track: *Build for Your World*.
 
-Calibrate is a Meta hackathon project in pre-development. It aims to help residents accept appropriate AI recommendations while recognizing when to question or override incorrect ones. The educational goal is to address both overreliance on AI and reflexive dismissal of useful recommendations.
+## The problem
 
-## Proposed workflow
+Residents are starting to train alongside AI decision-support tools, but nobody teaches them how to *use* one. There are two ways to fail:
 
-1. A resident works through a text-first, synthetic patient scenario.
-2. At defined scenario states, a simulated assistant presents controlled, scripted recommendations that may be correct or incorrect.
-3. The resident accepts, questions, or overrides the recommendation and explains their reasoning.
-4. Educator feedback reviews the decision, including missed errors and inappropriate rejection of sound advice.
-5. A simple session-level assessment summarizes the resident's responses across the cases.
+- **Overreliance (automation bias):** accepting a confident, wrong recommendation.
+- **Reflexive dismissal (algorithm aversion):** rejecting a correct recommendation because it came from a machine.
 
-## Scoped MVP
+Both are measurable, but neither gets taught. Residency programs have no standard way to practice or assess this skill.
 
-- A few reproducible, text-first synthetic patient cases.
-- Scripted correct and incorrect assistant suggestions at predefined states.
-- Resident decisions and brief reasoning captured during each case.
-- Educator feedback on both overreliance and reflexive dismissal.
-- A simple session-level assessment.
+## What Calibrate does
 
-Voice interaction, longitudinal tracking, and adaptive scenarios are possible later extensions and are outside the initial MVP.
+A resident works through a synthetic patient case. At set decision points, an AI assistant offers a recommendation. Some recommendations are sound and some contain a deliberately planted error. The resident accepts, questions, or overrides the recommendation and writes a short rationale. An AI educator then debriefs each decision. At the end, the resident gets a calibration profile: how often they caught real errors and how often they rejected good advice.
 
-## Intended Modal use
+**This is not a clinical tool and does not give medical advice.** All patients are synthetic. The assistant's errors are designed teaching stimuli, defined in advance by a clinician-authored case specification. Nothing here is meant for real patient care.
 
-The tentative architecture would use Modal for a Python simulation backend and parallel evaluation jobs to check reproducible scenarios and scripted recommendation behavior. This is a proposed use for a Modal credit application. No Modal integration or infrastructure has been implemented or deployed, and the architecture may change during development.
+## How it uses Meta's models
 
-## Current status
+| Role | Model | What it does |
+|---|---|---|
+| Imperfect clinical assistant | Muse Spark | Renders each recommendation in natural clinical language from a case spec that fixes the ground truth and the planted error (if any) at that decision point |
+| Error verifier | Muse Spark + deterministic checks | Confirms that each generated recommendation contains exactly the intended error and nothing unplanned before the resident sees it |
+| Educator | Muse Spark | Grades the resident's free-text rationale against a case rubric and explains what they caught, missed, or wrongly rejected |
+| *(stretch)* Spoken rationale | Muse Voice Transcribe | Lets residents talk through their reasoning the way they would on rounds |
 
-This project currently contains only this concept README. There is no application implementation, runnable prototype, or deployed integration. Educational efficacy has not been established.
+**Why this split:** the case spec keeps the teaching content controlled and reproducible, and the model makes the assistant read like a real tool instead of a script. The verifier catches the main risk: a generated recommendation with an error nobody planted.
 
-## Educational scope
+## Calibration metrics
 
-Calibrate is intended for education using synthetic cases only. It is not intended for clinical care, real patient decision-making, or use with identifiable patient information.
+Every assistant recommendation is either correct or incorrect, and every resident response either accepts or overrides it:
+
+|  | Resident accepts | Resident overrides |
+|---|---|---|
+| **Assistant correct** | Appropriate reliance | Reflexive dismissal |
+| **Assistant incorrect** | Overreliance | Appropriate override |
+
+The session report summarizes these cells per resident, along with rationale quality from the educator's grading.
+
+## MVP scope
+
+- [ ] 3–5 synthetic vascular surgery cases, each with a spec defining the decision points, ground truth, and planted errors
+- [ ] Assistant generation + verifier loop
+- [ ] Resident accept / question / override capture with written rationale
+- [ ] Educator debrief per decision
+- [ ] Session calibration report
+
+Out of scope for now: voice (stretch goal), longitudinal tracking across sessions, adaptive case difficulty.
+
+## Built during the hackathon
+
+All code in this repository was written between Oct 27 and Nov 4, 2026. Before the event, the only thing that existed was a one-paragraph concept README.
+
+## Status
+
+Pre-development. No working prototype yet. Educational effectiveness has not been studied.
+
+## Author
+
+Marissa Famularo, DO — vascular surgeon, Associate Program Director (Vascular Surgery Residency), and health data scientist.
