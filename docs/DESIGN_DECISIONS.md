@@ -81,5 +81,15 @@ Decided with the author, Oct 28, 2026. Coding agents: these override README wher
 - Built primarily with Claude Code (Muse Code not required; confirmed by organizers Oct 28).
 - Synthetic data only; no PHI anywhere, including testing.
 
+## UI (decided Oct 30, evening)
+- **Scene (center/left):** original cartoon patient with a speech bubble = the encounter conversation. The resident types (or dictates) into it. Exam maneuvers go in the same box ("checking his pulses"); findings return as a narrated line, not patient speech. Free text, no exam checklist (no cueing).
+- **Right panel:** assistant in the top third, collapsible to a slim bar; an alert turns it red with a badge, content hidden until clicked (ignoring is allowed and logged). Below: the chart (basics, results as they return, signed notes).
+- **Educator = "God":** a full-width panel that drops from the top over the whole scene only when the educator speaks; Socratic replies are typed inside it; it retracts after the teaching point. Assessment mode: drops once, at the end, with the debrief and report.
+- **Plans live in the note.** Every decision point is a note the resident signs; the classifier reads its Assessment & Plan:
+  - D1 = visit-1 H&P: ambient AI drafts the history (planted errors N1-N3); resident corrects it and writes the A/P; one signature commits both.
+  - D2 results note, B1 2-week return note, D3 workup note, D4 procedure plan note, D5 discharge note: short header + new results + blank A/P written by the resident. (No AI draft for these unless the author writes content.)
+  - Vague A/P -> God drops with the attending follow-up ("So what are you ordering?"); resident amends the A/P and re-signs.
+- Implication: A/P text is longer and messier than the 10-item classifier check; add A/P-style check items before trusting agreement.
+
 ## Open questions
 - (see conversation; resolved items get moved above)

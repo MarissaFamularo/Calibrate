@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calibrate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<!-- Start -->
+<section id="start" class="start">
+  <div class="start-inner">
+    <h1>Calibrate</h1>
+    <p class="lede">Work a vascular case with an AI assistant at your side. It is often right. Not always. Your job is to know which.</p>
+    <div class="start-actions">
+      <button class="btn primary" data-mode="practice">Start practice case</button>
+      <button class="btn" data-mode="assessment">Start assessment case</button>
+    </div>
+    <p class="start-note">Practice: the attending teaches after each signed note. Assessment: no feedback until the case ends.</p>
+    <a href="#faculty" class="link" id="to-faculty">Faculty: saved sessions</a>
+  </div>
+</section>
+
+<!-- Case -->
+<section id="app" class="app" hidden>
+  <header class="topbar">
+    <span class="brand">Calibrate</span>
+    <span class="case-title" id="case-title"></span>
+    <ol class="steps" id="steps" aria-label="Case progress"></ol>
+    <span class="mode" id="mode"></span>
+  </header>
+
+  <main class="layout">
+    <section class="scene" aria-label="Exam room">
+      <div class="room">
+        <img src="/static/patient.svg" class="patient" alt="The patient, seated on the exam table">
+        <div class="bubble" aria-live="polite">
+          <div class="bubble-log" id="encounter"></div>
+        </div>
+      </div>
+      <form class="say" id="say-form" autocomplete="off">
+        <label for="say" class="sr">Speak to the patient or examine him</label>
+        <input id="say" placeholder="Ask him something, or examine: “Let me check your pulses.”">
+        <button class="btn primary" type="submit">Say</button>
+        <button class="btn" type="button" id="finish-interview">Finish interview and draft note</button>
+      </form>
+
+      <!-- Note clipboard -->
+      <section class="clipboard" id="clipboard" hidden aria-label="Note">
+        <div class="clip-head">
+          <h2 id="note-title"></h2>
+          <button class="btn quiet" type="button" id="clip-toggle">Back to patient</button>
+        </div>
+        <div class="clip-body">
+          <div class="followup" id="note-followup" hidden></div>
+          <div id="note-results"></div>
+          <div id="note-history-wrap">
+            <label for="note-history">History, drafted by the ambient AI. Review and correct before signing.</label>
+            <textarea id="note-history" rows="12"></textarea>
+          </div>
+          <label for="note-ap">Assessment and plan</label>
+          <textarea id="note-ap" rows="6"></textarea>
+          <div class="clip-actions"><button class="btn primary" id="sign">Sign note</button></div>
+        </div>
+      </section>
+    </section>
+
+    <aside class="side">
+      <section class="assistant" id="assistant" aria-label="AI assistant">
+        <button class="assistant-bar" id="assistant-bar" aria-expanded="true">
+          <span class="ai-name">AI assistant</span>
+          <span class="alert-badge" id="alert-badge" hidden></span>
+          <span class="chev" aria-hidden="true"></span>
+        </button>
+        <div class="assistant-body">
+          <div class="ai-log" id="ai-log" aria-live="polite"></div>
+          <div class="alert-open" id="alert-open" hidden>
+            <span id="alert-text">Unopened alert</span><button class="btn small danger" id="open-alert">Open</button>
+          </div>
+          <form class="ai-ask" id="ai-form" autocomplete="off">
+            <label for="ai-q" class="sr">Ask the assistant</label>
+            <input id="ai-q" placeholder="Ask the assistant">
+            <button class="btn small" type="submit">Ask</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="chart" aria-label="Chart">
+        <div class="tabs" role="tablist">
+          <button role="tab" aria-selected="true" data-tab="chart">Chart</button>
+          <button role="tab" aria-selected="false" data-tab="results">Results <span id="results-count"></span></button>
+          <button role="tab" aria-selected="false" data-tab="notes">Notes <span id="notes-count"></span></button>
+        </div>
+        <div class="tab" id="tab-chart"></div>
+        <div class="tab" id="tab-results" hidden></div>
+        <div class="tab" id="tab-notes" hidden></div>
+      </section>
+    </aside>
+  </main>
+</section>
+
+<!-- God: the educator descends -->
+<div class="god" id="god" aria-hidden="true">
+  <div class="god-inner" role="dialog" aria-label="Attending" aria-modal="true">
+    <div class="god-content" id="god-content"></div>
+  </div>
+</div>
+
+<!-- Faculty -->
+<section id="faculty" class="faculty" hidden>
+  <header class="topbar"><span class="brand">Calibrate</span><span class="case-title">Saved sessions</span>
+    <a href="#" class="link" id="faculty-home">New case</a></header>
+  <div class="faculty-body"><ul id="saved-list" class="saved"></ul><div id="saved-report"></div></div>
+</section>
+
+<div class="busy" id="busy" hidden>Thinking…</div>
+<script src="/static/app.js"></script>
+</body>
+</html>

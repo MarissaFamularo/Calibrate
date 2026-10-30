@@ -25,8 +25,15 @@ Author's raw words: cases/clti-01_AUTHOR_NOTES.md. Never add clinical facts the 
 - Educator occasionally over-applies the rubric (e.g., asks about creatinine before angiogram; rubric only requires it before CTA).
 - Off-spec assistant answers are chart-grounded only; management questions outside spec topics get "not in the record"-style answers.
 
-## Next (BUILD_PLAN "Sun" work)
-UI screens 1-4 on FastAPI + vanilla JS over CaseRun; practice/assessment toggle; end-to-end playable. Sessions saved to sessions/ (gitignored).
+## UI (built Fri Oct 30 evening, ahead of plan)
+- calibrate/server.py (FastAPI) + calibrate/web/ (index.html, style.css, app.js, patient.svg). Run: `uvicorn calibrate.server:app --port 8000`, open http://localhost:8000. `CALIBRATE_FAKE=1` = scripted fake model (calibrate/fake.py) for UI work without network.
+- Design per DESIGN_DECISIONS "UI": patient scene + speech bubble (questions and exam), note clipboard (plans live in the note), assistant top-right (collapsible, red + badge on alerts), chart tabs, God panel for the educator, report, faculty list (#faculty).
+- Runtime additions: interview() returns {reply, exam}; current_note(), submit_note(ap, history), state(); follow-ups amend the same signed note (Addendum). Engine: exam_after_b1 (wound probes to bone at the 2-week return, author's words).
+- Tests: 52 (incl. tests/test_server.py API walks in both modes with the fake model).
+
+## Next
+- Live playtest by the author; A/P-style classifier items (plans are now note-length).
+- Dictation (shared mic component), deploy to Modal.
 
 ## Working notes for the agent
 - Project on her Mac: ~/Desktop/CoworkProjects/Apps/Calibrate (device_bash: $HOME/mnt/Apps/Calibrate).

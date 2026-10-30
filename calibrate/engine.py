@@ -66,6 +66,8 @@ class Session:
     def examine(self, component: str) -> str | None:
         self._log("examine", component)
         finding = self.case["exam"].get(component)
+        if "B1" in self.flags and component in self.case.get("exam_after_b1", {}):
+            finding = self.case["exam_after_b1"][component]
         if finding is not None:
             self.exam_done.add(component)
         return finding

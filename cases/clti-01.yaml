@@ -21,6 +21,9 @@ exam:
   pedal_pulses: "Not palpable"
   monofilament: "Diminished sensation consistent with neuropathy"
   footwear: "Regular sneaker"
+# Findings that change at the 2-week return (B1). Author: "2-week return: probes to bone on exam."
+exam_after_b1:
+  wound: "The wound now probes to bone."
 
 patient_script:
   wound_awareness: "I didn't notice it. My doctor found it."
@@ -109,6 +112,26 @@ patient_topics:
   statin: "Cholesterol medicine / statin and whether he takes it"
   smoking: "Smoking or tobacco use"
   diabetes_care: "How his diabetes is managed, diabetes doctor / endocrinology"
+
+# Exam components (keys of exam) for routing free-text exam maneuvers typed in the encounter box.
+exam_topics:
+  wound: "Inspect / look at / describe the wound"
+  periwound: "Skin around the wound: redness, erythema, cellulitis"
+  foot_temperature: "Feel the foot: temperature, warmth, cool or warm"
+  femoral_pulses: "Femoral pulses (groin)"
+  popliteal_pulses: "Popliteal pulses (behind the knee)"
+  pedal_pulses: "Pedal / foot pulses: DP, PT, dorsalis pedis, posterior tibial"
+  monofilament: "Sensation / monofilament / neuropathy testing"
+  footwear: "Look at his shoes / footwear"
+
+# Note shown at each decision point; the resident writes and signs the Assessment & Plan.
+notes:
+  D1: "Visit 1: vascular surgery H&P"
+  D2: "Noninvasive results note"
+  B1: "2-week return visit note"
+  D3: "Revascularization workup plan"
+  D4: "Procedure plan"
+  D5: "Discharge note"
 
 # Assistant topics (topic values in `assistant`) for routing resident questions.
 assistant_topics:

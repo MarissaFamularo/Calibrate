@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 460" role="img" aria-label="Illustration of the patient, a 58-year-old man in a gown, seated on an exam table">
+  <!-- exam table -->
+  <rect x="20" y="300" width="280" height="26" rx="6" fill="#B9C7BF"/>
+  <rect x="20" y="292" width="280" height="12" rx="6" fill="#F5F7F6"/>
+  <rect x="40" y="326" width="14" height="120" fill="#9AABA2"/>
+  <rect x="266" y="326" width="14" height="120" fill="#9AABA2"/>
+  <!-- legs -->
+  <path d="M118 300 L112 404 L138 404 L148 300 Z" fill="#C9A487"/>
+  <path d="M178 300 L176 404 L202 404 L206 300 Z" fill="#C9A487"/>
+  <!-- feet; right foot (viewer's left) has the toe dressing -->
+  <path d="M104 404 h40 a6 6 0 0 1 6 6 v8 h-50 a4 4 0 0 1 -4 -4 v-2 a8 8 0 0 1 8 -8 Z" fill="#C9A487"/>
+  <rect x="98" y="409" width="9" height="8" rx="2.5" fill="#FFFFFF" stroke="#D9D2C6"/>
+  <path d="M172 404 h36 a8 8 0 0 1 8 8 v2 a4 4 0 0 1 -4 4 h-46 v-8 a6 6 0 0 1 6 -6 Z" fill="#C9A487"/>
+  <!-- gown -->
+  <path d="M96 168 Q160 146 224 168 L238 304 Q160 318 84 304 Z" fill="#A9C4D6"/>
+  <g fill="#8FB0C6"><circle cx="122" cy="200" r="3"/><circle cx="160" cy="214" r="3"/><circle cx="198" cy="198" r="3"/>
+    <circle cx="136" cy="248" r="3"/><circle cx="182" cy="256" r="3"/><circle cx="114" cy="282" r="3"/><circle cx="210" cy="284" r="3"/></g>
+  <!-- arms -->
+  <path d="M98 172 Q76 220 86 290 L104 290 Q100 230 116 186 Z" fill="#A9C4D6"/>
+  <path d="M222 172 Q244 220 234 290 L216 290 Q220 230 204 186 Z" fill="#A9C4D6"/>
+  <circle cx="95" cy="294" r="11" fill="#C9A487"/><circle cx="225" cy="294" r="11" fill="#C9A487"/>
+  <!-- neck + head -->
+  <rect x="146" y="132" width="28" height="26" fill="#BE9879"/>
+  <ellipse cx="160" cy="100" rx="40" ry="46" fill="#C9A487"/>
+  <ellipse cx="120" cy="104" rx="7" ry="11" fill="#BE9879"/><ellipse cx="200" cy="104" rx="7" ry="11" fill="#BE9879"/>
+  <!-- thinning grey hair -->
+  <path d="M121 92 Q120 52 160 50 Q200 52 199 92 Q192 70 176 68 Q160 76 142 68 Q127 72 121 92 Z" fill="#A6A9AB"/>
+  <!-- face -->
+  <path d="M138 92 q8 -5 16 0" stroke="#6E5644" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M166 92 q8 -5 16 0" stroke="#6E5644" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <circle cx="146" cy="102" r="3.4" fill="#3A2E26"/><circle cx="174" cy="102" r="3.4" fill="#3A2E26"/>
+  <path d="M160 106 q-4 12 2 14" stroke="#A88369" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M146 128 q14 6 28 0" stroke="#7D5E4A" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M136 118 q-4 10 4 16 M184 118 q4 10 -4 16" stroke="#B18D73" stroke-width="2" fill="none" opacity=".6"/>
+</svg>

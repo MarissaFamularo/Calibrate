@@ -21,6 +21,9 @@ class CaseRun:
         self.cfg = cfg or ModelConfig()
         self.s = Session(case, mode=mode)
         self.transcript: list[tuple[str, str]] = []
+        self.encounter: list[dict] = []          # what the UI shows in the speech bubble history
+        self.signed_notes: list[dict] = []       # chart: every signed note
+        self.followup: str | None = None         # attending follow-up awaiting an amended A/P
         self.assistant_chat: list[dict] = []
         self.results: dict[str, str] = {}
         self.note: dict | None = None
@@ -36,14 +39,19 @@ class CaseRun:
         self.started = time.time()
 
     # ---------- encounter ----------
-    def interview(self, question: str) -> str:
+    def interview(self, question: str) -> dict:
+        """Encounter box: questions go to the patient; exam maneuvers return findings as narration.
+        Returns {"reply", "exam": [{"component", "finding"}]}. Exam findings never enter the transcript
+        (the ambient scribe hears the maneuver being announced, not the finding)."""
         out = patient.answer(self.llm, self.case, question, self.transcript, self.cfg.max_regenerations)
         for t in out["topics"]:
             self.s.ask_patient(t)
-        if not out["topics"]:
+        exam = [{"component": c, "finding": self.examine(c)} for c in out["exam"]]
+        if not out["topics"] and not exam:
             self.s._log("ask_patient_unscripted", question)
         self.transcript += [("Physician", question), ("Patient", out["reply"])]
-        return out["reply"]
+        self.encounter.append({"physician": question, "patient": out["reply"], "exam": exam})
+        return {"reply": out["reply"], "exam": exam}
 
     def examine(self, component: str) -> str:
         return self.s.examine(component) or "Not available."
@@ -161,16 +169,79 @@ class CaseRun:
         rec.setdefault("educator", []).append({k: t[k] for k in ("kind", "message", "ai_use_line")})
         return t
 
+    # ---------- notes (plans live in the note) ----------
+    def current_note(self) -> dict | None:
+        """The note the resident must write/sign now, or None (interview not finished / case over)."""
+        node = self.s.node
+        if node == TERMINAL or (node == "ENCOUNTER" and self.note is None):
+            return None
+        key = "D1" if node in ("ENCOUNTER", "NOTE") else node
+        hdr = []
+        if key == "D1":
+            hist, editable = self.signed_text or self.note["text"], not self.s.note_signed
+        else:
+            hist, editable = None, False
+            seen = {o for n in self.signed_notes for o in n.get("results", {})}
+            hdr = [{"test": o, "result": self.results[o]} for o in dict.fromkeys(self.s.orders)
+                   if o in self.results and o not in seen]
+        return {"node": key, "title": self.case["notes"].get(key, key), "prompt": self.case["nodes"][key]["prompt"],
+                "history": hist, "history_editable": editable, "new_results": hdr, "followup": self.followup}
+
+    def submit_note(self, ap: str, history: str | None = None) -> dict:
+        """Sign the current note. Visit 1: `history` is the resident-edited AI draft (judged for
+        corrections) and is locked at first signature. The A/P goes to the classifier."""
+        cur = self.current_note()
+        if cur is None:
+            raise ValueError("no note to sign")
+        if self.educator_open():
+            raise ValueError("finish with the educator first")
+        if not self.s.note_signed:
+            self.sign_note(history if history is not None else self.note["text"])
+        shown = {x["test"]: x["result"] for x in cur["new_results"]}  # results this note was written against
+        r = self.decide(ap)
+        self.followup = r.get("followup")
+        status = "needs follow-up" if self.followup else "signed"
+        prev = self.signed_notes[-1] if self.signed_notes else None
+        if prev and prev["node"] == cur["node"] and prev["status"] == "needs follow-up":
+            prev["ap"] += f"\nAddendum: {ap}"  # amended after the attending's follow-up
+            prev["status"] = status
+        else:
+            self.signed_notes.append({"node": cur["node"], "title": cur["title"],
+                                      "history": self.signed_text if cur["node"] == "D1" else None, "ap": ap,
+                                      "results": shown, "status": status})
+        return r
+
+    def educator_open(self) -> bool:
+        return (self.mode == "practice" and bool(self.exchanges)
+                and not self.exchanges[-1][0].endswith("(teaching_point)"))
+
+    def state(self) -> dict:
+        node = self.s.node
+        phase = ("done" if node == TERMINAL else "interview" if self.note is None
+                 else "educator" if self.educator_open() else "note")
+        return {"mode": self.mode, "node": node, "phase": phase, "case_title": self.case["title"],
+                "chart": self.case["chart"], "results": [{"test": o, "result": self.results[o]} for o in dict.fromkeys(self.s.orders) if o in self.results],
+                "encounter": self.encounter, "signed_notes": self.signed_notes, "note": self.current_note(),
+                "alerts_pending": self.pending_alerts(), "assistant_chat": [{k: v for k, v in m.items() if k != "info"} for m in self.assistant_chat],
+                "educator": (self.records[-1].get("educator") if self.records and self.mode == "practice" else None),
+                "educator_node": self.records[-1]["node"] if self.records else None,
+                "exchanges": [{"who": "educator" if w.startswith("Educator") else "resident", "text": t,
+                               "kind": w[9:-1] if w.startswith("Educator(") else None} for w, t in self.exchanges]
+                if self.mode == "practice" else []}
+
     # ---------- report ----------
     def report(self) -> dict:
         if self.s.node != TERMINAL:
             raise ValueError("case not finished")
+        if getattr(self, "_report", None) is not None:
+            return self._report
         outcome, cal = self.s.outcome(), self.s.calibration()
         rep = {"mode": self.mode, "outcome": outcome, "calibration": cal, "decisions": self.records}
         if self.mode == "assessment":
             decs = [{"node": r["node"], "text": r["text"], "actions": r["action_labels"], "results": r["results"],
                      "consequence": r["consequence"], "ai_facts": r["ai_facts"]} for r in self.records]
             rep["debrief"] = educator.debrief(self.llm, self.case, decs, cal, outcome)
+        self._report = rep
         return rep
 
     def save(self, folder: str | Path = "sessions") -> Path:

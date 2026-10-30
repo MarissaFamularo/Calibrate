@@ -15,7 +15,8 @@ Rules:
 - Do not volunteer topics the physician did not ask about.
 - If the question is not covered by any script topic, give a brief, natural non-answer ("I'm not sure," "I don't really know," "Nobody's told me about that") and report no topics. Never invent an answer.
 - Greetings and small talk: reply briefly and politely, no medical content.
-- Keep replies short (1-3 sentences). No medical jargon beyond what the script uses."""
+- Keep replies short (1-3 sentences). No medical jargon beyond what the script uses.
+- EXAM: if the physician is performing or announcing a physical exam maneuver ("let me check your pulses", "I'm looking at the wound"), list the matching EXAM COMPONENTS in "exam" ("pulses" with no location = all pulse components). The patient then just cooperates briefly ("Okay." / "Sure."). Never describe exam findings yourself. "exam" is [] for ordinary questions."""
 
 
 def _script_block(case: dict) -> str:
@@ -26,12 +27,16 @@ def _script_block(case: dict) -> str:
 def answer(llm, case: dict, question: str, transcript: list[tuple[str, str]], max_regenerations: int = 2) -> dict:
     """Returns {"reply", "topics", "info"}. Caller passes topics to Session.ask_patient."""
     topics = list(case["patient_script"])
+    comps = list(case["exam"])
     schema = strict_object({"topics": {"type": "array", "items": {"type": "string", "enum": topics}},
+                            "exam": {"type": "array", "items": {"type": "string", "enum": comps}},
                             "reply": {"type": "string"}})
+    eg = case.get("exam_topics", {})
+    exam_block = "\n".join(f"- {c}: {eg.get(c, c)}" for c in comps)
     convo = "\n".join(f"{w}: {t}" for w, t in transcript[-12:]) or "(start of interview)"
 
     def gen(feedback):
-        msgs = [{"role": "system", "content": SYSTEM + "\n\nSCRIPT:\n" + _script_block(case)},
+        msgs = [{"role": "system", "content": SYSTEM + "\n\nSCRIPT:\n" + _script_block(case) + "\n\nEXAM COMPONENTS:\n" + exam_block},
                 {"role": "user", "content": f"Conversation so far:\n{convo}\n\nPhysician's latest question: {question}"}]
         if feedback:
             msgs.append({"role": "user", "content": "Your previous reply broke the rules: " + "; ".join(feedback)
@@ -52,9 +57,11 @@ def answer(llm, case: dict, question: str, transcript: list[tuple[str, str]], ma
         # Topic routing was fine but wording kept drifting: read the script verbatim.
         ts = [t for t in (last or {}).get("topics", []) if t in case["patient_script"]]
         if ts:
-            return {"topics": ts, "reply": " ".join(case["patient_script"][t] for t in ts)}
-        return {"topics": [], "reply": "I'm not sure."}
+            return {"topics": ts, "exam": [], "reply": " ".join(case["patient_script"][t] for t in ts)}
+        ex = [c for c in (last or {}).get("exam", []) if c in case["exam"]]
+        return {"topics": [], "exam": ex, "reply": "Okay." if ex else "I'm not sure."}
 
     out, info = generate_checked(gen, check, max_regenerations, fallback)
     out["topics"] = list(dict.fromkeys(t for t in out["topics"] if t in case["patient_script"]))
+    out["exam"] = list(dict.fromkeys(c for c in out.get("exam", []) if c in case["exam"]))
     return {**out, "info": info}
