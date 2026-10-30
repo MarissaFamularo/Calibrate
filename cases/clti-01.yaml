@@ -115,6 +115,12 @@ patient_topics:
   smoking: "Smoking or tobacco use"
   diabetes_care: "How his diabetes is managed, diabetes doctor / endocrinology"
 
+# What the patient knows about himself from his own chart (no numbers he wasn't told). Restates chart facts only.
+patient_knows:
+  - "I have diabetes. I take metformin for it."
+  - "I have high blood pressure. I take metoprolol for it; I started it about a year ago."
+  - "No allergies to medicines."
+
 # Exam components (keys of exam) for routing free-text exam maneuvers typed in the encounter box.
 exam_topics:
   wound: "Inspect / look at / describe the wound"

@@ -27,13 +27,13 @@ def test_citation_guard():
 
 # ---------- patient ----------
 def test_patient_invented_number_falls_back_to_script():
-    llm = FakeLLM({"patient": [{"topics": ["smoking"], "reply": "Two packs a day for 40 years."}] * 3})
+    llm = FakeLLM({"patient": [{"topics": ["smoking"], "exam": [], "exam_unmatched": False, "reply": "Two packs a day for 40 years."}] * 3})
     out = patient.answer(llm, CASE, "Do you smoke?", [])
     assert out["reply"] == CASE["patient_script"]["smoking"] and out["info"]["fallback"]
 
 
 def test_patient_unscripted_deflects():
-    llm = FakeLLM({"patient": {"topics": [], "reply": "I'm not sure about that."}})
+    llm = FakeLLM({"patient": {"topics": [], "exam": [], "exam_unmatched": False, "reply": "No, nothing like that."}})
     out = patient.answer(llm, CASE, "Any chest pain?", [])
     assert out["topics"] == [] and not out["info"]["fallback"]
 
@@ -157,7 +157,7 @@ def responder(role, messages, schema):
     if role == "patient":
         q = messages[-1]["content"].lower().split("latest question:")[-1]
         t = "smoking" if "smok" in q else "statin" if "cholesterol" in q else None
-        return {"topics": [t] if t else [], "reply": CASE["patient_script"][t] if t else "I'm not sure."}
+        return {"topics": [t] if t else [], "exam": [], "exam_unmatched": False, "reply": CASE["patient_script"][t] if t else "No."}
     if role == "scribe":
         return dict(GOOD_NOTE, social_history="Not discussed.")
     if role == "verifier":

@@ -6,7 +6,7 @@ const TEST = { abi_pvr: "ABI / PVR", toe_pressure: "Toe pressures", xray_foot: "
   mri_foot: "Foot MRI", wound_care_center: "Wound care center referral" };
 const EXAM = { wound: "Wound", periwound: "Skin around the wound", foot_temperature: "Foot temperature",
   femoral_pulses: "Femoral pulses", popliteal_pulses: "Popliteal pulses", pedal_pulses: "Pedal pulses",
-  monofilament: "Monofilament", footwear: "Footwear" };
+  monofilament: "Monofilament", footwear: "Footwear", other: "Exam" };
 const STEPS = [["ENCOUNTER", "Interview"], ["D1", "Visit 1"], ["D2", "Results"], ["B1", "2-week return"],
   ["D3", "Workup"], ["D4", "Procedure"], ["D5", "Discharge"]];
 const testName = (t) => TEST[t] || t.replace(/_/g, " ");

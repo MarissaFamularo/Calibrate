@@ -47,6 +47,9 @@ class CaseRun:
         for t in out["topics"]:
             self.s.ask_patient(t)
         exam = [{"component": c, "finding": self.examine(c)} for c in out["exam"]]
+        if out.get("exam_unmatched"):
+            self.s._log("examine_unspecified", question)
+            exam.append({"component": "other", "finding": "No finding recorded for that exam in this case."})
         if not out["topics"] and not exam:
             self.s._log("ask_patient_unscripted", question)
         self.transcript += [("Physician", question), ("Patient", out["reply"])]

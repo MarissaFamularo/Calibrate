@@ -4,19 +4,18 @@ from __future__ import annotations
 from ..guards import generate_checked, unsupported_numbers
 from ..llm import strict_object
 
-SYSTEM = """You are role-playing a patient in a clinical training simulation. A physician is interviewing you.
+SYSTEM = """You are role-playing a patient in a clinical training simulation (standardized-patient rules). A physician is interviewing and examining you.
 
-You may ONLY state facts found in the SCRIPT below. Each script entry is a topic and what the patient says about it.
+Your facts are the SCRIPT (topics) and WHAT YOU KNOW ABOUT YOURSELF below. Nothing else about you is abnormal.
 
 Rules:
-- Decide which script topics the physician's latest question is asking about. Report them in "topics" (empty list if none).
-- Answer only those topics, in the patient's plain first-person voice. Light paraphrase is fine; keep the meaning exact.
-- Never add details that are not in the script: no extra symptoms, history, durations, numbers, medications, names, or feelings.
-- Do not volunteer topics the physician did not ask about.
-- If the question is not covered by any script topic, give a brief, natural non-answer ("I'm not sure," "I don't really know," "Nobody's told me about that") and report no topics. Never invent an answer.
-- Greetings and small talk: reply briefly and politely, no medical content.
-- Keep replies short (1-3 sentences). No medical jargon beyond what the script uses.
-- EXAM: if the physician is performing or announcing a physical exam maneuver ("let me check your pulses", "I'm looking at the wound"), list the matching EXAM COMPONENTS in "exam" ("pulses" with no location = all pulse components). The patient then just cooperates briefly ("Okay." / "Sure."). Never describe exam findings yourself. "exam" is [] for ordinary questions."""
+- Decide which script topics the physician's latest question asks about. Report them in "topics" (empty list if none). Answer those in the patient's plain first-person voice; light paraphrase is fine, meaning exact.
+- Questions answered by WHAT YOU KNOW ABOUT YOURSELF: answer from it (no topic to report).
+- Anything else about symptoms, history, function, habits, or family: the answer is negative or normal. Deny it or say it's fine, briefly ("No." / "No, nothing like that." / "Yes, I can move them fine."). Never add a new problem or detail.
+- Anything you would only know if a doctor told you (test results, numbers, diagnoses, what a doctor thinks): say nobody has told you.
+- Do not volunteer topics the physician did not ask about. Greetings and small talk: brief and polite.
+- Keep replies short (1-3 sentences), plain words, no medical jargon.
+- EXAM: if the physician is performing or announcing a physical exam maneuver ("let me check your pulses", "I'm looking at the wound"), list the matching EXAM COMPONENTS in "exam" ("pulses" with no location = all pulse components), and just cooperate ("Okay."). If the maneuver matches none of them, set "exam_unmatched" true. Questions the physician asks YOU ("can you move your toes?") are not exam maneuvers: answer them. Never describe exam findings yourself."""
 
 
 def _script_block(case: dict) -> str:
@@ -30,13 +29,16 @@ def answer(llm, case: dict, question: str, transcript: list[tuple[str, str]], ma
     comps = list(case["exam"])
     schema = strict_object({"topics": {"type": "array", "items": {"type": "string", "enum": topics}},
                             "exam": {"type": "array", "items": {"type": "string", "enum": comps}},
+                            "exam_unmatched": {"type": "boolean"},
                             "reply": {"type": "string"}})
     eg = case.get("exam_topics", {})
     exam_block = "\n".join(f"- {c}: {eg.get(c, c)}" for c in comps)
     convo = "\n".join(f"{w}: {t}" for w, t in transcript[-12:]) or "(start of interview)"
 
     def gen(feedback):
-        msgs = [{"role": "system", "content": SYSTEM + "\n\nSCRIPT:\n" + _script_block(case) + "\n\nEXAM COMPONENTS:\n" + exam_block},
+        msgs = [{"role": "system", "content": SYSTEM + "\n\nSCRIPT:\n" + _script_block(case)
+                    + "\n\nWHAT YOU KNOW ABOUT YOURSELF:\n" + "\n".join(f"- {k}" for k in case.get("patient_knows", []))
+                    + "\n\nEXAM COMPONENTS:\n" + exam_block},
                 {"role": "user", "content": f"Conversation so far:\n{convo}\n\nPhysician's latest question: {question}"}]
         if feedback:
             msgs.append({"role": "user", "content": "Your previous reply broke the rules: " + "; ".join(feedback)
@@ -46,7 +48,7 @@ def answer(llm, case: dict, question: str, transcript: list[tuple[str, str]], ma
     def check(out):
         probs = []
         used = [case["patient_script"][t] for t in out["topics"] if t in case["patient_script"]]
-        extra = unsupported_numbers(out["reply"], *used, question)
+        extra = unsupported_numbers(out["reply"], *used, *case.get("patient_knows", []), question)
         if extra:
             probs.append(f"numbers not in the script: {sorted(extra)}")
         if not out["reply"].strip():
@@ -57,11 +59,12 @@ def answer(llm, case: dict, question: str, transcript: list[tuple[str, str]], ma
         # Topic routing was fine but wording kept drifting: read the script verbatim.
         ts = [t for t in (last or {}).get("topics", []) if t in case["patient_script"]]
         if ts:
-            return {"topics": ts, "exam": [], "reply": " ".join(case["patient_script"][t] for t in ts)}
+            return {"topics": ts, "exam": [], "exam_unmatched": False, "reply": " ".join(case["patient_script"][t] for t in ts)}
         ex = [c for c in (last or {}).get("exam", []) if c in case["exam"]]
-        return {"topics": [], "exam": ex, "reply": "Okay." if ex else "I'm not sure."}
+        return {"topics": [], "exam": ex, "exam_unmatched": False, "reply": "Okay." if ex else "No."}
 
     out, info = generate_checked(gen, check, max_regenerations, fallback)
     out["topics"] = list(dict.fromkeys(t for t in out["topics"] if t in case["patient_script"]))
     out["exam"] = list(dict.fromkeys(c for c in out.get("exam", []) if c in case["exam"]))
+    out["exam_unmatched"] = bool(out.get("exam_unmatched")) and not out["exam"]
     return {**out, "info": info}
