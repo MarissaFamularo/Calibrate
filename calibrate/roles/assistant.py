@@ -11,6 +11,7 @@ OFFSPEC_CONFIDENCE = "Moderate"
 ROUTE_SYSTEM = """You route a clinician's question to an AI clinical assistant topic.
 Choose a topic ONLY if the question is specifically asking for that one thing (e.g., "What's his WIfI?", "Open or endo?", "What LDL goal?", "Should he be on aspirin?", "Is his creatinine OK for contrast?").
 Broad or general questions go to "other": overall workup, what to order next, next steps, differential, general management, how to treat a diabetic foot ulcer, anything covering several topics.
+Interpreting a test result (ABI, PVR, toe pressures, imaging, labs) goes to "other" unless the question asks for the WIfI stage itself.
 Topics:
 {topics}"""
 
