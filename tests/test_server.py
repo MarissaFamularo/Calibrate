@@ -12,7 +12,12 @@ c = TestClient(server.app)
 
 def _walk(mode, tmp_path):
     server.SESSIONS_DIR = tmp_path
-    sid = c.post("/api/session", json={"mode": mode}).json()["id"]
+    first = c.post("/api/session", json={"mode": mode}).json()
+    sid = first["id"]
+    need = {"mode", "node", "phase", "chart", "results", "encounter", "signed_notes", "note", "alerts_pending",
+            "assistant_chat", "educator", "exchanges"}
+    assert need <= set(first["state"]), need - set(first["state"])
+    assert "notes" not in first["state"]["chart"]
     r = c.post(f"/api/{sid}/talk", json={"text": "Let me check your pulses"}).json()
     assert [x["component"] for x in r["result"]["exam"]] == ["femoral_pulses", "popliteal_pulses", "pedal_pulses"]
     c.post(f"/api/{sid}/talk", json={"text": "Do you smoke?"})

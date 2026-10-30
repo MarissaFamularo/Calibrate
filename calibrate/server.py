@@ -23,6 +23,14 @@ WEB = Path(__file__).parent / "web"
 RUNS: dict[str, CaseRun] = {}
 
 app = FastAPI(title="Calibrate")
+
+
+@app.middleware("http")
+async def no_cache(request, call_next):
+    """Always revalidate page assets so a restarted server never runs against a stale cached script."""
+    resp = await call_next(request)
+    resp.headers["Cache-Control"] = "no-cache"
+    return resp
 app.mount("/static", StaticFiles(directory=WEB), name="static")
 
 
