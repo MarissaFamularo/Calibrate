@@ -218,3 +218,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+_to_delete/
+
+# Calibrate session logs
+sessions/

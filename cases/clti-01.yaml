@@ -1,0 +1,200 @@
+# CLTI-01 machine spec. Source of truth for content: cases/clti-01.md (author-approved).
+# The engine reads ONLY this file. Model roles render language from it; they never add facts.
+id: clti-01
+title: "Diabetic toe wound, chronic limb-threatening ischemia"
+
+chart:
+  referral: "58-year-old man referred by his PCP for a foot wound the PCP found on exam. The patient had not noticed it."
+  pmh: ["Diabetes mellitus (A1c 11), not on insulin", "Hypertension"]
+  meds: ["Metformin", "Metoprolol (started 1 year ago)", "Statin (ordered)"]
+  allergies: "NKDA"
+  vitals: {bp: "140/70", other: "Within normal limits"}
+  labs: {A1c: "11"}
+  notes: ["No antiplatelet ordered", "Has not seen endocrinology; PCP trialing metformin alone", "Lipid panel not checked in the last 12 months", "No prior vascular imaging"]
+
+exam:
+  wound: "Tip of the second toe: round, ~1 cm, full thickness, slough at the base, no bone exposed"
+  periwound: "1 cm of erythema around the wound"
+  foot_temperature: "Warm"
+  femoral_pulses: "Palpable bilaterally"
+  popliteal_pulses: "Palpable bilaterally"
+  pedal_pulses: "Not palpable"
+  monofilament: "Diminished sensation consistent with neuropathy"
+  footwear: "Regular sneaker"
+
+patient_script:
+  wound_awareness: "I didn't notice it. My doctor found it."
+  pain: "No, it doesn't hurt. No pain at rest, no cramping when I walk."
+  work_footwear: "I have to wear a boot at work. Sometimes the boot gets wet."
+  statin: "I have a prescription for a cholesterol pill but I don't take it."
+  smoking: "I smoke a pack a day. Have for about 30 years."
+  diabetes_care: "My doctor wants to see how I do on just the metformin. I've never seen a diabetes specialist."
+
+orders:
+  abi_pvr: {result: "Ankle vessels non-compressible; ABI 1.7. PVR waveforms provided."}
+  toe_pressure: {result: "Toe pressure 23 mmHg on the wound foot; flattened digit waveforms."}
+  xray_foot: {result: "No osseous abnormality.", result_after_b1: "Abnormality of the distal phalanx of the second toe consistent with osteomyelitis, isolated to the toe."}
+  creatinine: {result: "1.2 mg/dL"}
+  cta_runoff: {result: "No significant aortoiliac disease. No femoropopliteal disease. Calcific tibial disease; tibial vessels not well visualized."}
+  vein_mapping: {result: "Great saphenous vein < 2 mm throughout, bilaterally."}
+  angiogram: {result: "Three-vessel tibial disease."}
+  lipid_panel: {result: "LDL 110 mg/dL"}
+  a1c: {result: "11 (already in chart)"}
+  mri_foot: {not_indicated_after_b1: "Not indicated: the wound probes to bone; plain film is sufficient.", note: "low-value order"}
+  wound_care_center: {message: "There is no wound care center. You manage the wound."}
+default_order_result: "Not available."
+
+note_errors:
+  N1: {type: attribution, trigger_topic: statin, error: "Lists statin as active therapy", correction_action: note_fix_statin, downstream: ldl}
+  N2: {type: omission, trigger_topic: smoking, error: "Social history omits smoking", correction_action: note_fix_smoking, downstream: smoking}
+  N3: {type: smoothing, trigger_topic: work_footwear, error: "Wears appropriate footwear", correction_action: note_fix_footwear, downstream: offloading}
+
+# Assistant outputs. correct: true | false | low_value.
+# adopt / override: resident actions that count as following vs. rejecting this output.
+assistant:
+  A1: {kind: alert, appears_after: abi_pvr, content: "ABI 1.7: perfusion adequate for healing.", correct: false, confidence: High,
+       adopt: [perfusion_adequate, enough_flow], override: [noncompressible, ischemic_by_tp]}
+  A2: {kind: topic, topic: wifi, content: "WIfI W1 I0 fI1.", correct: false, confidence: High,
+       adopt: [wifi_ischemia_0], override: [wifi_correct]}
+  A3: {kind: topic, topic: revasc_strategy, when: vein_status_unknown, content: "Endovascular first; BEST-CLI supports an endovascular-first approach.", citation: "BEST-CLI", correct: false, confidence: High,
+       adopt: [angio_before_mapping], override: [vein_mapping_first]}
+  A3b: {kind: topic, topic: revasc_strategy, when: vein_status_known, content: "No adequate single-segment GSV; endovascular tibial intervention is reasonable (BEST-CLI).", citation: "BEST-CLI", correct: true, confidence: High,
+        adopt: [endo_tibial], override: [bypass_prosthetic, bypass_cryo]}
+  A4: {kind: topic, topic: lipid_goal, content: "Target LDL < 100 mg/dL.", correct: false, confidence: Moderate,
+       adopt: [ldl_goal_100], override: [ldl_goal_70_55]}
+  A4n: {kind: topic, topic: lipid_goal, when: n1_signed_uncorrected, content: "Patient is on statin therapy per the note; continue current statin.", correct: false, confidence: High,
+        adopt: [continue_current_statin], override: [statin_high_intensity]}
+  A5a: {kind: topic, topic: antiplatelet, content: "Single antiplatelet therapy is indicated per AHA guidelines.", citation: "2024 ACC/AHA lower extremity PAD guideline", correct: true, confidence: High, adopt: [antiplatelet], override: [no_antiplatelet]}
+  A5b: {kind: topic, topic: blood_pressure, content: "BP is above goal; intensify antihypertensive therapy per AHA guidelines.", citation: "2024 ACC/AHA lower extremity PAD guideline", correct: true, confidence: High, adopt: [bp_management], override: [no_bp_change]}
+  A5c: {kind: topic, topic: diabetes, content: "A1c 11 needs intensified glycemic management and endocrinology referral.", citation: "2024 ACC/AHA lower extremity PAD guideline", correct: true, confidence: High, adopt: [diabetes_management], override: [diabetes_per_pcp]}
+  A5d: {kind: topic, topic: smoking_cessation, content: "Offer cessation counseling and pharmacotherapy.", citation: "2024 ACC/AHA lower extremity PAD guideline", correct: true, confidence: High, adopt: [smoking_cessation], override: [no_smoking_cessation]}
+  A6: {kind: topic, topic: contrast_safety, content: "Creatinine 1.2 is likely acceptable for CTA.", correct: true, confidence: Low, adopt: [order_cta], override: [decline_cta_renal]}
+  A7: {kind: alert, appears_after: d1, content: "Influenza vaccine is due.", correct: low_value, confidence: Moderate, adopt: [], override: []}
+
+# Risk factors: managed vs. deferred. Last action wins.
+risk_factors:
+  ldl: {managed: [statin_high_intensity, ldl_goal_70_55], deferred: [lipids_per_pcp, continue_current_statin, ldl_goal_100]}
+  diabetes: {managed: [diabetes_management], deferred: [diabetes_per_pcp]}
+  offloading: {managed: [offloading], deferred: []}
+  smoking: {managed: [smoking_cessation], deferred: [no_smoking_cessation, smoking_per_pcp]}
+  antiplatelet: {managed: [antiplatelet], deferred: [no_antiplatelet, antiplatelet_per_pcp]}
+  bp: {managed: [bp_management], deferred: [no_bp_change, bp_per_pcp]}
+
+nodes:
+  D1: {prompt: "What is your plan for this patient today?",
+       actions: [order_noninvasive, order_xray, offloading, wound_care_self, enough_flow, wound_care_referral]}
+  D2: {prompt: "Noninvasive results are back. How do you interpret them, what is the WIfI, and what next?",
+       actions: [noncompressible, ischemic_by_tp, wifi_correct, wifi_ischemia_0, revasc_workup, perfusion_adequate]}
+  B1: {prompt: "He returns at 2 weeks. The wound now probes to bone. What now?",
+       actions: [order_xray, order_mri, revasc_workup, no_revasc_workup]}
+  D3: {prompt: "How do you work up his anatomy and plan revascularization?",
+       actions: [order_creatinine, order_cta, vein_mapping_first, angio_before_mapping, order_angiogram, order_vein_mapping, bypass_without_mapping]}
+  D4: {prompt: "Angiogram shows three-vessel tibial disease and vein mapping shows no adequate GSV. What do you do?",
+       actions: [endo_tibial, bypass_prosthetic, bypass_cryo]}
+  D5: {prompt: "Before discharge: what is your medical management plan?", actions: []}
+
+terminal:
+  B1b: "He returns 2 weeks later with gas gangrene of the foot. Guillotine amputation, then a higher-level amputation."
+  B2: "In the OR there was no usable vein (< 2 mm). There was no CryoVein in house, so PTFE was used. The graft became infected and occluded, required explant, and he underwent below-knee amputation."
+
+# ---------------------------------------------------------------------------
+# Model-layer vocabulary. Glosses only restate the IDs above in plain words
+# (wording from clti-01.md); they add no clinical facts.
+
+# Patient-interview topics (keys of patient_script) as the patient model sees them.
+patient_topics:
+  wound_awareness: "Whether he knew about the wound / how it was found"
+  pain: "Foot or leg pain, rest pain, cramping or pain with walking (claudication)"
+  work_footwear: "Work, occupation, shoes or boots, footwear"
+  statin: "Cholesterol medicine / statin and whether he takes it"
+  smoking: "Smoking or tobacco use"
+  diabetes_care: "How his diabetes is managed, diabetes doctor / endocrinology"
+
+# Assistant topics (topic values in `assistant`) for routing resident questions.
+assistant_topics:
+  wifi: "WIfI staging / classification of the wound (wound, ischemia, foot infection grades)"
+  revasc_strategy: "Revascularization strategy: open bypass vs endovascular, what to do first"
+  lipid_goal: "Cholesterol / LDL goal, statin dosing or choice"
+  antiplatelet: "Antiplatelet therapy (aspirin, clopidogrel)"
+  blood_pressure: "Blood pressure goal or management"
+  diabetes: "Diabetes / glycemic management, A1c, endocrinology referral"
+  smoking_cessation: "Smoking cessation"
+  contrast_safety: "Contrast / kidney safety for CTA or angiogram, creatinine"
+
+# Action glosses for the classifier. Node-specific actions appear only at their node;
+# global_actions are recognized at every decision node.
+action_labels:
+  order_noninvasive: "Order noninvasive arterial studies: ABI/PVR and/or toe pressures"
+  order_xray: "Order a foot X-ray"
+  offloading: "Offload the wound (e.g., surgical/post-op shoe, keep pressure off the toe)"
+  wound_care_self: "Resident/clinic manages the wound care (dressings, local care) themselves"
+  enough_flow: "Concludes he has enough blood flow to heal; no vascular workup"
+  wound_care_referral: "Refer to a wound care center"
+  noncompressible: "Recognizes the ankle vessels are non-compressible / ABI falsely elevated"
+  ischemic_by_tp: "Identifies ischemia from the toe pressure / flattened digit waveforms"
+  wifi_correct: "States WIfI W1 I3 fI1"
+  wifi_ischemia_0: "States a WIfI with ischemia grade 0 (e.g., W1 I0 fI1)"
+  revasc_workup: "Proceeds to a revascularization / anatomic workup"
+  perfusion_adequate: "Accepts perfusion as adequate for healing / ischemia is not the problem"
+  order_mri: "Order a foot MRI"
+  no_revasc_workup: "Does not pursue revascularization workup now"
+  order_creatinine: "Check creatinine / renal function"
+  order_cta: "Order a CTA runoff"
+  order_vein_mapping: "Order vein mapping (saphenous vein duplex)"
+  order_angiogram: "Order / perform an angiogram"
+  bypass_without_mapping: "Take him to the OR for bypass now, without vein mapping"
+  decline_cta_renal: "Declines CTA because of kidney/contrast concern"
+  endo_tibial: "Endovascular treatment of a tibial vessel (e.g., balloon angioplasty)"
+  bypass: "Open surgical bypass (any conduit)"
+  order_lipid_panel: "Order a lipid panel"
+  order_a1c: "Order an A1c"
+  statin_high_intensity: "Start or intensify a high-intensity statin"
+  ldl_goal_70_55: "States an LDL goal of <70 or <55"
+  ldl_goal_100: "States an LDL goal of <100"
+  continue_current_statin: "Continue the current statin as is"
+  lipids_per_pcp: "Leaves cholesterol/lipid management to the PCP"
+  diabetes_management: "Manages diabetes himself/herself: intensify glycemic therapy and/or endocrinology referral"
+  diabetes_per_pcp: "Leaves diabetes management to the PCP"
+  smoking_cessation: "Addresses smoking: counseling and/or pharmacotherapy"
+  no_smoking_cessation: "Explicitly decides not to address smoking"
+  smoking_per_pcp: "Leaves smoking cessation to the PCP"
+  antiplatelet: "Start antiplatelet therapy (aspirin or clopidogrel)"
+  no_antiplatelet: "Explicitly decides against antiplatelet therapy"
+  antiplatelet_per_pcp: "Leaves antiplatelet decision to the PCP"
+  bp_management: "Adjust/intensify blood pressure management"
+  no_bp_change: "Explicitly leaves the BP regimen unchanged"
+  bp_per_pcp: "Leaves blood pressure management to the PCP"
+
+global_actions: [offloading, order_lipid_panel, order_a1c, statin_high_intensity, ldl_goal_70_55, ldl_goal_100,
+  continue_current_statin, lipids_per_pcp, diabetes_management, diabetes_per_pcp, smoking_cessation,
+  no_smoking_cessation, smoking_per_pcp, antiplatelet, no_antiplatelet, antiplatelet_per_pcp, bp_management,
+  no_bp_change, bp_per_pcp]
+
+# What the classifier offers at each node. Sequence-dependent IDs (vein_mapping_first,
+# angio_before_mapping) and conduit choice are assigned deterministically in code.
+classifier_actions:
+  D1: [order_noninvasive, order_xray, wound_care_self, enough_flow, wound_care_referral]
+  D2: [noncompressible, ischemic_by_tp, wifi_correct, wifi_ischemia_0, revasc_workup, perfusion_adequate]
+  B1: [order_xray, order_mri, revasc_workup, no_revasc_workup]
+  D3: [order_creatinine, order_cta, order_vein_mapping, order_angiogram, bypass_without_mapping, decline_cta_renal]
+  D4: [endo_tibial, bypass]
+  D5: []
+
+# Educator rubrics (from clti-01.md section 6, author-approved).
+rubrics:
+  D1: "Correct: ABI/PVR with toe pressures; baseline foot X-ray; offloading (surgical shoe); resident-managed wound care; start risk-factor workup and management. Wrong: 'enough blood to heal', or wound care only with no vascular workup (including wound care referral with no workup). 'Per PCP' for any risk factor counts as not managed."
+  D2: "Correct: recognize non-compressible ankle vessels; ischemia by toe pressure; WIfI W1 I3 fI1; proceed to revascularization workup. Wrong: accept ABI 1.7 as adequate perfusion."
+  B1: "Wound now probes to bone. X-ray is the right test (osteomyelitis of the distal phalanx); MRI is not indicated when the wound probes to bone. Revascularization workup is still required; not pursuing it leads to gas gangrene."
+  D3: "Correct: CTA optional, but creatinine must be checked first; vein mapping BEFORE angiogram. Angiogram before vein mapping is a detour (second angiogram needed), not a fail. Going to the OR for bypass without vein mapping is wrong."
+  D4: "Three-vessel tibial disease and no single-segment GSV: endovascular treatment of one tibial vessel (balloon angioplasty), supported by BEST-CLI given no adequate GSV. Endovascular is appropriate only because vein mapping showed no adequate GSV."
+  D5: "Correct: high-intensity statin regardless of LDL level; LDL goal <70 or <55 by risk; antiplatelet therapy; smoking cessation offered; diabetes management + endocrinology referral; BP management; AHA guideline-concordant. Resident manages, does not defer to PCP. Using the assistant for guideline lookup is expected and fine."
+
+# Machine checks for planted note errors (used by the scribe verifier and the note-edit judge).
+# must_contain_any is checked in `section`; must_not_contain_any across the whole note.
+# fallback_edit applies the error to the deterministic fallback note.
+note_error_checks:
+  N1: {section: medications, must_contain_any: [statin], must_not_contain_any: ["not tak", "doesn't take", "does not take", "don't take", "non-adher", "nonadher", "noncomplian", "non-complian", "not using"],
+       fallback_edit: {section: medications, replace: ["Statin (ordered)", "Statin"]}}
+  N2: {section: social_history, must_contain_any: [], must_not_contain_any: [smok, tobacco, cigarette, "pack-year", "pack a day", "ppd", nicotine]}
+  N3: {section: social_history, must_contain_any: ["appropriate footwear"], must_not_contain_any: [wet],
+       fallback_edit: {section: social_history, append: "Wears appropriate footwear."}}
