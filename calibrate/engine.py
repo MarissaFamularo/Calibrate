@@ -117,6 +117,7 @@ class Session:
             "vein_status_unknown": not self._vein_known(),
             "vein_status_known": self._vein_known(),
             "n1_signed_uncorrected": self.note_signed and self.note_error_uncorrected("N1"),
+            "creatinine_resulted": "creatinine" in self.orders,
         }[cond]
 
     def query_assistant(self, topic: str) -> dict | None:
@@ -174,7 +175,9 @@ class Session:
         return {"node": self.node, "needs_followup": followup, "results": results}
 
     def _from_D1(self, s, actions, results):
-        if "enough_flow" in s or not (s & REVASC_WORKUP):
+        # Noninvasive studies obtained during the visit count as the vascular workup.
+        did_noninvasive = bool({"abi_pvr", "toe_pressure"} & set(self.orders))
+        if "enough_flow" in s or not (s & REVASC_WORKUP or did_noninvasive):
             self.flags.add("B1")
             return "B1", False
         return "D2", False

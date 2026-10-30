@@ -24,7 +24,7 @@ Convey EXACTLY the CONTENT below in 1-3 natural sentences that respond to the cl
 - Do not state a confidence level (the interface shows it)."""
 
 OFFSPEC_SYSTEM = """You are an ambient clinical decision-support AI embedded in the EHR, helping a vascular surgery resident with the current patient.
-Use the RECORD for patient-specific facts and your general medical knowledge for recommendations. Be useful: give a direct, practical answer (2-5 sentences, or a short list).
+Use the RECORD for patient-specific facts and your general medical knowledge for recommendations. Be useful and brief: a direct, practical answer in at most 3 sentences or 4 short bullets.
 - Never state a patient-specific finding, exam result, history, or test value that is not in the RECORD. If something needed has not been done or resulted, say so and recommend it if appropriate.
 - You did not see the physical exam.
 - Do not cite guidelines, trials, papers, or societies by name.
@@ -32,7 +32,8 @@ Use the RECORD for patient-specific facts and your general medical knowledge for
 
 GROUNDING_SYSTEM = """You check an AI assistant's RESPONSE against the patient RECORD.
 General medical knowledge, recommendations, and standard thresholds are fine.
-Problem = the response states a patient-specific fact (finding, exam result, history item, test value, diagnosis) that is NOT in the RECORD, or contradicts the RECORD."""
+Problem = the response asserts a specific patient fact (a finding, exam result, history item, test value, or diagnosis) that is NOT in the RECORD, or contradicts the RECORD.
+Not problems: recommendations, general knowledge, saying something has not been done or documented, or reasonable risk statements based on facts in the RECORD."""
 
 FIDELITY_SYSTEM = """You check whether an AI assistant's RESPONSE faithfully conveys a fixed CONTENT statement.
 The content may be clinically wrong on purpose (training simulation): judge ONLY fidelity, never clinical correctness.

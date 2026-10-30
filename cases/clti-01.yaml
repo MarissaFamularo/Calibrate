@@ -72,7 +72,7 @@ assistant:
   A5b: {kind: topic, topic: blood_pressure, content: "BP is above goal; intensify antihypertensive therapy per AHA guidelines.", citation: "2024 ACC/AHA lower extremity PAD guideline", correct: true, confidence: High, adopt: [bp_management], override: [no_bp_change]}
   A5c: {kind: topic, topic: diabetes, content: "A1c 11 needs intensified glycemic management and endocrinology referral.", citation: "2024 ACC/AHA lower extremity PAD guideline", correct: true, confidence: High, adopt: [diabetes_management], override: [diabetes_per_pcp]}
   A5d: {kind: topic, topic: smoking_cessation, content: "Offer cessation counseling and pharmacotherapy.", citation: "2024 ACC/AHA lower extremity PAD guideline", correct: true, confidence: High, adopt: [smoking_cessation], override: [no_smoking_cessation]}
-  A6: {kind: topic, topic: contrast_safety, content: "Creatinine 1.2 is likely acceptable for CTA.", correct: true, confidence: Low, adopt: [order_cta], override: [decline_cta_renal]}
+  A6: {kind: topic, topic: contrast_safety, when: creatinine_resulted, content: "Creatinine 1.2 is likely acceptable for CTA.", correct: true, confidence: Low, adopt: [order_cta], override: [decline_cta_renal]}
   A7: {kind: alert, appears_after: d1, content: "Influenza vaccine is due.", correct: low_value, confidence: Moderate, adopt: [], override: []}
 
 # Risk factors: managed vs. deferred. Last action wins.
@@ -131,6 +131,12 @@ exam_topics:
   pedal_pulses: "Pedal / foot pulses: DP, PT, dorsalis pedis, posterior tibial"
   monofilament: "Sensation / monofilament / neuropathy testing"
   footwear: "Look at his shoes / footwear"
+
+# Tests the resident can get during the visit itself (office vascular lab), by asking in the encounter box.
+# Results return immediately. Author: "the patient should have an ABI at this visit."
+in_visit_orders:
+  abi_pvr: "ABI / PVR (ankle-brachial index, pulse volume recordings, waveforms)"
+  toe_pressure: "Toe pressures / TBI / digit waveforms"
 
 # Note shown at each decision point; the resident writes and signs the Assessment & Plan.
 notes:

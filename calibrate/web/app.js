@@ -83,8 +83,9 @@ function renderEncounter() {
   }
   box.innerHTML = S.encounter.map((e) => {
     let h = `<div class="line you">${esc(e.physician)}</div>`;
-    if (e.patient && !(e.exam.length && /^(okay|sure)\.?$/i.test(e.patient.trim()))) h += `<div class="line patient">${esc(e.patient)}</div>`;
+    if (e.patient && !((e.exam.length || (e.orders || []).length) && /^(okay|sure)[,. a-z]*$/i.test(e.patient.trim()))) h += `<div class="line patient">${esc(e.patient)}</div>`;
     h += e.exam.map((x) => `<div class="line exam"><b>${esc(EXAM[x.component] || x.component)}:</b> ${esc(x.finding)}</div>`).join("");
+    h += (e.orders || []).map((x) => `<div class="line exam"><b>${esc(testName(x.test))} (vascular lab):</b> ${esc(x.result)}</div>`).join("");
     return h;
   }).join("");
   box.scrollTop = box.scrollHeight;

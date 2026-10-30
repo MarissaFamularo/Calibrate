@@ -40,7 +40,10 @@ def responder(case):
             exam = _hits(q, WORDS["exam"]) if any(w in q.lower() for w in exam_words) else []
             topics = [] if exam else _hits(q, WORDS["patient"])
             reply = "Okay." if exam else (" ".join(case["patient_script"][t] for t in topics) or "I'm not sure.")
-            return {"topics": topics, "exam": exam, "exam_unmatched": False, "reply": reply}
+            orders = [o for o, ws in {"abi_pvr": ["abi"], "toe_pressure": ["toe pressure"]}.items() if any(w in q.lower() for w in ws)]
+            if orders:
+                exam, topics, reply = [], [], "Okay."
+            return {"topics": topics, "exam": exam, "exam_unmatched": False, "orders": orders, "reply": reply}
         if role == "scribe":
             return {"hpi": case["chart"]["referral"], "pmh": "; ".join(case["chart"]["pmh"]),
                     "medications": "Metformin; metoprolol; statin", "allergies": case["chart"]["allergies"],

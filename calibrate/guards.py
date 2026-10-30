@@ -8,10 +8,8 @@ import re
 from typing import Callable
 
 _NUM = re.compile(r"(?<![A-Za-z])\d+(?:\.\d+)?|(?<=[A-Za-z])\d+")
-_CITE = re.compile(
-    r"\b(?:[A-Z][A-Z0-9]+(?:-[A-Z0-9]+)+|ACC/AHA|AHA|ADA|ESC|ESVS|SVS|KDIGO|NICE|USPSTF|et al\.?|guidelines?|trials?)\b",
-    re.IGNORECASE,
-)
+_CITE_ACRONYM = re.compile(r"\b(?:[A-Z][A-Z0-9]+(?:-[A-Z0-9]+)+|ACC/AHA|AHA|ADA|ESC|ESVS|SVS|KDIGO|NICE|USPSTF)\b")  # case-sensitive
+_CITE_WORDS = re.compile(r"\b(?:et al\.?|guidelines?|trials?)\b", re.IGNORECASE)
 
 
 def numbers(text: str) -> set[str]:
@@ -27,7 +25,8 @@ def unsupported_numbers(text: str, *sources: str) -> set[str]:
 
 
 def citation_terms(text: str) -> set[str]:
-    return {m.lower().rstrip(".") for m in _CITE.findall(text or "")}
+    t = text or ""
+    return {m.lower().rstrip(".") for m in _CITE_ACRONYM.findall(t) + _CITE_WORDS.findall(t)}
 
 
 def unsupported_citations(text: str, *sources: str) -> set[str]:

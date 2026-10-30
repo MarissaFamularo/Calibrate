@@ -47,14 +47,15 @@ class CaseRun:
         for t in out["topics"]:
             self.s.ask_patient(t)
         exam = [{"component": c, "finding": self.examine(c)} for c in out["exam"]]
+        orders = [{"test": o, "result": self.order(o)} for o in out.get("orders", [])]
         if out.get("exam_unmatched"):
             self.s._log("examine_unspecified", question)
             exam.append({"component": "other", "finding": "No finding recorded for that exam in this case."})
-        if not out["topics"] and not exam:
+        if not out["topics"] and not exam and not orders:
             self.s._log("ask_patient_unscripted", question)
         self.transcript += [("Physician", question), ("Patient", out["reply"])]
-        self.encounter.append({"physician": question, "patient": out["reply"], "exam": exam})
-        return {"reply": out["reply"], "exam": exam}
+        self.encounter.append({"physician": question, "patient": out["reply"], "exam": exam, "orders": orders})
+        return {"reply": out["reply"], "exam": exam, "orders": orders}
 
     def examine(self, component: str) -> str:
         return self.s.examine(component) or "Not available."
@@ -95,7 +96,7 @@ class CaseRun:
             msg = {"id": spec["id"], "topic": topic, "text": r["text"], "confidence": spec["confidence"],
                    "citation": spec.get("citation"), "info": r["info"]}
         else:
-            r = assistant.answer_offspec(self.llm, question, self._record(), self.cfg.max_regenerations,
+            r = assistant.answer_offspec(self.llm, question, self._record(), 1,
                                          verify_with_model=self.cfg.verify_assistant_with_model)
             msg = {"id": None, "topic": topic, "text": r["text"], "confidence": assistant.OFFSPEC_CONFIDENCE,
                    "citation": None, "info": r["info"]}
@@ -185,9 +186,9 @@ class CaseRun:
             hist, editable = self.signed_text or self.note["text"], not self.s.note_signed
         else:
             hist, editable = None, False
-            seen = {o for n in self.signed_notes for o in n.get("results", {})}
-            hdr = [{"test": o, "result": self.results[o]} for o in dict.fromkeys(self.s.orders)
-                   if o in self.results and o not in seen]
+        seen = {o for n in self.signed_notes for o in n.get("results", {})}
+        hdr = [{"test": o, "result": self.results[o]} for o in dict.fromkeys(self.s.orders)
+               if o in self.results and o not in seen]
         return {"node": key, "title": self.case["notes"].get(key, key), "prompt": self.case["nodes"][key]["prompt"],
                 "history": hist, "history_editable": editable, "new_results": hdr, "followup": self.followup}
 

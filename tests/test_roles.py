@@ -217,3 +217,27 @@ def test_offspec_ungrounded_patient_fact_regenerates():
                    "verifier": [{"problems": ["toe pressure 40 not in record"]}, {"problems": []}]})
     r = assistant.answer_offspec(llm, "What next?", "CHART: no tests resulted")
     assert r["text"] == "Order ABI with toe pressures." and r["info"]["attempts"] == 2
+
+
+def test_hyphenated_words_are_not_citations():
+    assert unsupported_citations("Arrange follow-up and a risk-factor review.", "") == set()
+
+
+def test_contrast_answer_waits_for_creatinine():
+    run = CaseRun(CASE, FakeLLM(responder))
+    assert run.s.query_assistant("contrast_safety") is None
+    run.order("creatinine")
+    assert run.s.query_assistant("contrast_safety")["id"] == "A6"
+
+
+def test_in_visit_abi_counts_as_workup_and_raises_alert():
+    from calibrate.fake import fake_llm
+    run = CaseRun(CASE, fake_llm(CASE))
+    r = run.interview("Let's get an ABI and toe pressures now.")
+    assert [o["test"] for o in r["orders"]] == ["abi_pvr", "toe_pressure"]
+    assert "A1" in run.pending_alerts()
+    run.draft_note()
+    assert [x["test"] for x in run.current_note()["new_results"]] == ["abi_pvr", "toe_pressure"]
+    run.s.sign_note(set())
+    run.s.decide(["offloading", "wound_care_self"])  # plan doesn't re-order the ABI
+    assert run.s.node == "D2"
