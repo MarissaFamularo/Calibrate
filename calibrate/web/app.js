@@ -66,7 +66,7 @@ function render() {
 }
 
 function renderSteps() {
-  const signed = new Set(S.signed_notes.filter((n) => n.status === "signed").map((n) => n.node));
+  const signed = new Set(S.signed_notes.filter((n) => n.status === "signed").flatMap((n) => n.covers || [n.node]));
   const now = S.phase === "done" ? null : S.node === "ENCOUNTER" ? (S.note ? "D1" : "ENCOUNTER") : S.node;
   const visitedB1 = signed.has("B1") || now === "B1";
   $("#steps").innerHTML = STEPS.filter(([k]) => k !== "B1" || visitedB1).map(([k, label]) => {

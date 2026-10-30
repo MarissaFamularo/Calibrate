@@ -68,10 +68,11 @@ def responder(case):
             return {"text": "That is not in the available record."}
         if role == "classifier":
             node = next((n for n, d in case["nodes"].items() if d["prompt"] in sys), "D5")
+            ideal = IDEAL["D1"] + IDEAL["D2"] if case.get("merged_visit1_prompt", "@@") in sys else IDEAL[node]
             if "vague" in last.lower().split("resident:")[-1]:
                 return {"status": "unclear", "actions": [], "followup": "Be specific. What exactly are you doing?"}
             allowed = set(props["actions"]["items"]["enum"])
-            return {"status": "clear", "actions": [a for a in IDEAL[node] if a in allowed], "followup": ""}
+            return {"status": "clear", "actions": [a for a in ideal if a in allowed], "followup": ""}
         if role == "educator":
             if "decisions" in props:
                 nodes = props["decisions"]["items"]["properties"]["node"]["enum"]

@@ -241,3 +241,14 @@ def test_in_visit_abi_counts_as_workup_and_raises_alert():
     run.s.sign_note(set())
     run.s.decide(["offloading", "wound_care_self"])  # plan doesn't re-order the ABI
     assert run.s.node == "D2"
+
+
+def test_in_visit_abi_merges_d1_and_d2():
+    from calibrate.fake import fake_llm
+    run = CaseRun(CASE, fake_llm(CASE), mode="assessment")
+    run.interview("Let's get an ABI and toe pressures now.")
+    run.draft_note()
+    assert run.current_note()["prompt"] == CASE["merged_visit1_prompt"]
+    run.submit_note("plan", run.note["text"])  # fake classifier returns ideal D1+D2 actions
+    assert run.s.node == "D3" and run.records[-1]["covers"] == ["D1", "D2"]
+    assert run.signed_notes[0]["covers"] == ["D1", "D2"]

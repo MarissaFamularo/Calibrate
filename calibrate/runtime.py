@@ -124,7 +124,12 @@ class CaseRun:
         if node == TERMINAL:
             raise ValueError("case is over")
         dialog = self.pending.get(node, [])
-        c = classifier.classify(self.llm, self.case, node, text, dialog)
+        merged = self._merged_visit1()
+        if merged:  # ABI/toe pressures done during visit 1: this note decides D1 and D2 together
+            c = classifier.classify(self.llm, self.case, node, text, dialog, nodes=["D1", "D2"],
+                                    prompt=self.case["merged_visit1_prompt"])
+        else:
+            c = classifier.classify(self.llm, self.case, node, text, dialog)
         if c["status"] == "unclear":
             self.pending[node] = dialog + [("Resident", text), ("Attending", c["followup"])]
             return {"node": node, "followup": c["followup"]}
@@ -132,7 +137,14 @@ class CaseRun:
         acts = [a for a in acts if a not in self.applied.get(node, [])]
         pre_log, pre_alerts = len(self.s.log), list(self.s.alerts_shown)
         seen_before = dict(self.results)  # what the resident could see when writing this plan
-        r = self.s.decide(acts)
+        if merged:
+            d2 = set(self.case["classifier_actions"]["D2"])
+            r = self.s.decide([a for a in acts if a not in d2])
+            if self.s.node == "D2":
+                r2 = self.s.decide([a for a in acts if a in d2])
+                r = {**r2, "results": {**r["results"], **r2["results"]}}
+        else:
+            r = self.s.decide(acts)
         self.results.update(r["results"])
         self.applied.setdefault(node, []).extend(acts)
         texts = [t for w, t in dialog if w == "Resident"] + [text]
@@ -142,7 +154,11 @@ class CaseRun:
             return {"node": node, "followup": q, "results": r["results"]}
         self.pending.pop(node, None)
         all_acts = self.applied.pop(node)
-        rec = {"node": node, "text": " / ".join(texts), "actions": all_acts,
+        covers = ["D1", "D2"] if merged else [node]
+        rubric = " ".join(self.case["rubrics"][n] for n in covers)
+        rec = {"node": node, "covers": covers, "rubric": rubric,
+               "prompt": self.case["merged_visit1_prompt"] if merged else self.case["nodes"][node]["prompt"],
+               "text": " / ".join(texts), "actions": all_acts,
                "action_labels": [self.case["action_labels"].get(a, a) for a in all_acts],
                "results": dict(seen_before),            # seen before deciding
                "results_new": dict(r["results"]),        # returned BY this decision; not yet seen
@@ -170,7 +186,8 @@ class CaseRun:
     def _educator_turn(self) -> dict:
         rec = self.records[-1]
         ex = [("Educator" if w.startswith("Educator") else w, t) for w, t in self.exchanges]
-        d = {"text": rec["text"], "actions": rec["action_labels"], "results": rec["results"], "consequence": rec["consequence"]}
+        d = {"text": rec["text"], "actions": rec["action_labels"], "results": rec["results"], "consequence": rec["consequence"],
+             "rubric": rec["rubric"], "prompt": rec["prompt"]}
         # Practice feedback happens before the resident has seen this decision's results: withhold them.
         t = educator.socratic_turn(self.llm, self.case, rec["node"], d, rec["ai_facts"], ex)
         self.exchanges.append((f"Educator({t['kind']})", t["message"]))
@@ -192,7 +209,8 @@ class CaseRun:
         seen = {o for n in self.signed_notes for o in n.get("results", {})}
         hdr = [{"test": o, "result": self.results[o]} for o in dict.fromkeys(self.s.orders)
                if o in self.results and o not in seen]
-        return {"node": key, "title": self.case["notes"].get(key, key), "prompt": self.case["nodes"][key]["prompt"],
+        prompt = self.case["merged_visit1_prompt"] if key == "D1" and self._merged_visit1() else self.case["nodes"][key]["prompt"]
+        return {"node": key, "title": self.case["notes"].get(key, key), "prompt": prompt,
                 "history": hist, "history_editable": editable, "new_results": hdr, "followup": self.followup}
 
     def submit_note(self, ap: str, history: str | None = None) -> dict:
@@ -213,11 +231,17 @@ class CaseRun:
         if prev and prev["node"] == cur["node"] and prev["status"] == "needs follow-up":
             prev["ap"] += f"\nAddendum: {ap}"  # amended after the attending's follow-up
             prev["status"] = status
+            if not self.followup and self.records:
+                prev["covers"] = self.records[-1]["covers"]
         else:
-            self.signed_notes.append({"node": cur["node"], "title": cur["title"],
+            self.signed_notes.append({"node": cur["node"], "covers": self.records[-1]["covers"] if not self.followup and self.records else [cur["node"]],
+                                      "title": cur["title"],
                                       "history": self.signed_text if cur["node"] == "D1" else None, "ap": ap,
                                       "results": shown, "status": status})
         return r
+
+    def _merged_visit1(self) -> bool:
+        return self.s.node in ("ENCOUNTER", "NOTE", "D1") and bool({"abi_pvr", "toe_pressure"} & set(self.results))
 
     def educator_open(self) -> bool:
         return (self.mode == "practice" and bool(self.exchanges)
@@ -248,7 +272,7 @@ class CaseRun:
         rep = {"mode": self.mode, "outcome": outcome, "calibration": cal, "decisions": self.records}
         if self.mode == "assessment":
             decs = [{"node": r["node"], "text": r["text"], "actions": r["action_labels"], "results": r["results"],
-                     "results_new": r.get("results_new", {}),
+                     "results_new": r.get("results_new", {}), "rubric": r.get("rubric"), "prompt": r.get("prompt"),
                      "consequence": r["consequence"], "ai_facts": r["ai_facts"]} for r in self.records]
             rep["debrief"] = educator.debrief(self.llm, self.case, decs, cal, outcome)
         self._report = rep

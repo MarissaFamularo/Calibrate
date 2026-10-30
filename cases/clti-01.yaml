@@ -138,6 +138,9 @@ in_visit_orders:
   abi_pvr: "ABI / PVR (ankle-brachial index, pulse volume recordings, waveforms)"
   toe_pressure: "Toe pressures / TBI / digit waveforms"
 
+# When noninvasive studies were done during visit 1, the visit-1 note covers D1 and D2 together.
+merged_visit1_prompt: "Noninvasive studies are back from today's visit. What is your assessment (interpretation, WIfI) and plan?"
+
 # Note shown at each decision point; the resident writes and signs the Assessment & Plan.
 notes:
   D1: "Visit 1: vascular surgery H&P"

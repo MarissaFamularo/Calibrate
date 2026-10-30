@@ -70,7 +70,7 @@ def socratic_turn(llm, case: dict, node: str, decision: dict, ai_facts: list[str
         return probs
 
     def fallback(last):
-        return {"kind": "teaching_point", "message": case["rubrics"][node],
+        return {"kind": "teaching_point", "message": decision.get("rubric") or case["rubrics"][node],
                 "ai_use_line": ai_facts[0] if ai_facts else "You did not consult the AI assistant at this decision."}
 
     out, info = generate_checked(gen, check, max_regenerations, fallback)
@@ -124,8 +124,8 @@ def debrief(llm, case: dict, decisions: list[dict], calibration: dict, outcome: 
 def _facts_block(case: dict, node: str, d: dict, ai_facts: list[str]) -> str:
     res = "\n".join(f"- {k}: {v}" for k, v in (d.get("results") or {}).items()) or "- (none)"
     new = "\n".join(f"- {k}: {v}" for k, v in (d.get("results_new") or {}).items())
-    return (f"DECISION PROMPT: {case['nodes'][node]['prompt']}\n"
-            f"RUBRIC: {case['rubrics'][node]}\n"
+    return (f"DECISION PROMPT: {d.get('prompt') or case['nodes'][node]['prompt']}\n"
+            f"RUBRIC: {d.get('rubric') or case['rubrics'][node]}\n"
             f"RESIDENT SAID: {d['text']}\n"
             f"CLASSIFIED AS: {', '.join(d.get('actions') or []) or '(nothing specific)'}\n"
             f"RESULTS THE RESIDENT HAD SEEN WHEN DECIDING (only refer to these):\n{res}\n"

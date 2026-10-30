@@ -27,14 +27,15 @@ FOLLOWUPS = {  # engine-requested follow-ups when a clear answer still leaves th
 }
 
 
-def vocabulary(case: dict, node: str) -> list[str]:
-    acts = list(case["classifier_actions"].get(node, [])) + list(case["global_actions"])
+def vocabulary(case: dict, node: str, nodes: list[str] | None = None) -> list[str]:
+    acts = [a for n in (nodes or [node]) for a in case["classifier_actions"].get(n, [])] + list(case["global_actions"])
     return list(dict.fromkeys(acts))
 
 
-def classify(llm, case: dict, node: str, text: str, dialog: list[tuple[str, str]] | None = None) -> dict:
+def classify(llm, case: dict, node: str, text: str, dialog: list[tuple[str, str]] | None = None,
+             nodes: list[str] | None = None, prompt: str | None = None) -> dict:
     """Returns {"status", "actions" (model IDs), "followup"}. `dialog` = prior (speaker, text) at this node."""
-    acts = vocabulary(case, node)
+    acts = vocabulary(case, node, nodes)
     labels = case["action_labels"]
     listing = "\n".join(f"- {a}: {labels[a]}" for a in acts)
     schema = strict_object({
@@ -44,7 +45,7 @@ def classify(llm, case: dict, node: str, text: str, dialog: list[tuple[str, str]
     })
     convo = "".join(f"{w}: {t}\n" for w, t in (dialog or [])) + f"Resident: {text}"
     out = llm.json("classifier", [
-        {"role": "system", "content": SYSTEM.format(prompt=case["nodes"][node]["prompt"], actions=listing)},
+        {"role": "system", "content": SYSTEM.format(prompt=prompt or case["nodes"][node]["prompt"], actions=listing)},
         {"role": "user", "content": convo}], schema, "decision_actions")
     out["actions"] = list(dict.fromkeys(a for a in out["actions"] if a in acts))
     if out["status"] == "unclear":
