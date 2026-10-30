@@ -220,7 +220,7 @@ class CaseRun:
         phase = ("done" if node == TERMINAL else "interview" if self.note is None
                  else "educator" if self.educator_open() else "note")
         return {"mode": self.mode, "node": node, "phase": phase, "case_title": self.case["title"],
-                "chart": self.case["chart"], "results": [{"test": o, "result": self.results[o]} for o in dict.fromkeys(self.s.orders) if o in self.results],
+                "chart": {k: v for k, v in self.case["chart"].items() if k != "notes"},  # care-gap notes hidden from the resident "results": [{"test": o, "result": self.results[o]} for o in dict.fromkeys(self.s.orders) if o in self.results],
                 "encounter": self.encounter, "signed_notes": self.signed_notes, "note": self.current_note(),
                 "alerts_pending": self.pending_alerts(), "assistant_chat": [{k: v for k, v in m.items() if k != "info"} for m in self.assistant_chat],
                 "educator": (self.records[-1].get("educator") if self.records and self.mode == "practice" else None),

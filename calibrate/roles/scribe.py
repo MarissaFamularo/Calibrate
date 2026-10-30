@@ -83,7 +83,7 @@ Return an empty list if there are no other problems. Be precise; do not report s
 def draft(llm, case: dict, transcript: list[tuple[str, str]], triggered: list[str], topics_asked: set[str], *,
           verify_with_model: bool = True, max_regenerations: int = 2) -> dict:
     """Returns {"note": sections, "text": rendered, "info"}."""
-    src = f"CHART:\n{chart_text(case)}\n\nTRANSCRIPT:\n{transcript_text(transcript)}"
+    src = f"CHART:\n{chart_text(case, include_notes=False)}\n\nTRANSCRIPT:\n{transcript_text(transcript)}"
     planned = [f"- {n} ({case['note_errors'][n]['type']}): {case['note_errors'][n]['error']}. "
                f"How: {TYPE_HOW[case['note_errors'][n]['type']]}." for n in triggered]
     planned_txt = "\n".join(planned) or "(none: the note must be fully accurate)"

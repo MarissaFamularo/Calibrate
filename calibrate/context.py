@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 
-def chart_text(case: dict) -> str:
+def chart_text(case: dict, include_notes: bool = True) -> str:
+    """include_notes=False hides the chart notes (care-gap cues) from roles the resident sees directly."""
     c = case["chart"]
     lines = [f"Referral: {c['referral']}",
              "PMH: " + "; ".join(c["pmh"]),
@@ -10,7 +11,8 @@ def chart_text(case: dict) -> str:
              f"Allergies: {c['allergies']}",
              "Vitals: " + "; ".join(f"{k.upper() if k == 'bp' else k}: {v}" for k, v in c["vitals"].items()),
              "Labs: " + "; ".join(f"{k} {v}" for k, v in c["labs"].items())]
-    lines += [f"Chart note: {n}" for n in c["notes"]]
+    if include_notes:
+        lines += [f"Chart note: {n}" for n in c["notes"]]
     return "\n".join(lines)
 
 

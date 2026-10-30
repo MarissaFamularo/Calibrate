@@ -145,8 +145,7 @@ function renderChart() {
     <dt>Medications</dt><dd><ul>${c.meds.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></dd>
     <dt>Allergies</dt><dd>${esc(c.allergies)}</dd>
     <dt>Vitals</dt><dd>BP ${esc(c.vitals.bp)}. ${esc(c.vitals.other)}.</dd>
-    <dt>Labs</dt><dd>${Object.entries(c.labs).map(([k, v]) => `${esc(k)} ${esc(v)}`).join("; ")}</dd>
-    <dt>Chart notes</dt><dd><ul>${c.notes.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></dd></dl>`;
+    <dt>Labs</dt><dd>${Object.entries(c.labs).map(([k, v]) => `${esc(k)} ${esc(v)}`).join("; ")}</dd></dl>`;
   $("#tab-results").innerHTML = S.results.length ? S.results.map((r) =>
     `<div class="res"><b>${esc(testName(r.test))}</b>${esc(r.result)}</div>`).join("")
     : `<p class="empty">Nothing resulted yet. Orders go in the plan of your note.</p>`;
