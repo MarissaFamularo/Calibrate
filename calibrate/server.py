@@ -6,6 +6,7 @@ import json
 import os
 import uuid
 from pathlib import Path
+from typing import Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
@@ -43,7 +44,7 @@ class Text(BaseModel):
 
 class Note(BaseModel):
     ap: str
-    history: str | None = None
+    history: Optional[str] = None  # Optional, not str | None: pydantic evaluates this on Python 3.9 (macOS system Python)
 
 
 def _run(sid: str) -> CaseRun:
