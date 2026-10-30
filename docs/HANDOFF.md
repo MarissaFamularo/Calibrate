@@ -36,4 +36,5 @@ UI screens 1-4 on FastAPI + vanilla JS over CaseRun; practice/assessment toggle;
 - Author preferences: concise, one question at a time, proceed with defensible defaults, she writes clinical content (Claude may propose, she approves).
 
 ## GitHub status
-- Not pushed. add_repo push access denied again Oct 30 (needs her approval). Local repo: all Calibrate work still uncommitted beyond the README rewrite. Committing from device_bash needs delete permission (git lock files), so either grant push access to a cloud session or commit/push from her Mac.
+- Pushed to MarissaFamularo/Calibrate main (Oct 30, commit 2fc04cb + this handoff update). Pushes go through a cloud clone (/home/claude/calibrate) with add_repo push access; copy changed files from the Mac with device_stage_files, commit, push.
+- Her Mac clone has the same files but its git index is behind origin. To sync without touching files: `git fetch && git reset origin/main` (mixed reset, run on her Mac).
