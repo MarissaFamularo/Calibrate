@@ -131,6 +131,7 @@ class CaseRun:
         acts = classifier.to_engine_actions(node, c["actions"], self.s.orders)
         acts = [a for a in acts if a not in self.applied.get(node, [])]
         pre_log, pre_alerts = len(self.s.log), list(self.s.alerts_shown)
+        seen_before = dict(self.results)  # what the resident could see when writing this plan
         r = self.s.decide(acts)
         self.results.update(r["results"])
         self.applied.setdefault(node, []).extend(acts)
@@ -143,7 +144,8 @@ class CaseRun:
         all_acts = self.applied.pop(node)
         rec = {"node": node, "text": " / ".join(texts), "actions": all_acts,
                "action_labels": [self.case["action_labels"].get(a, a) for a in all_acts],
-               "results": {k: self.results[k] for k in self._orders_since(pre_log, include_all=True)} | r["results"],
+               "results": dict(seen_before),            # seen before deciding
+               "results_new": dict(r["results"]),        # returned BY this decision; not yet seen
                "consequence": self._consequence(node),
                "ai_facts": self._ai_facts(pre_log, pre_alerts, all_acts)}
         self.records.append(rec)
@@ -169,6 +171,7 @@ class CaseRun:
         rec = self.records[-1]
         ex = [("Educator" if w.startswith("Educator") else w, t) for w, t in self.exchanges]
         d = {"text": rec["text"], "actions": rec["action_labels"], "results": rec["results"], "consequence": rec["consequence"]}
+        # Practice feedback happens before the resident has seen this decision's results: withhold them.
         t = educator.socratic_turn(self.llm, self.case, rec["node"], d, rec["ai_facts"], ex)
         self.exchanges.append((f"Educator({t['kind']})", t["message"]))
         rec.setdefault("educator", []).append({k: t[k] for k in ("kind", "message", "ai_use_line")})
@@ -245,6 +248,7 @@ class CaseRun:
         rep = {"mode": self.mode, "outcome": outcome, "calibration": cal, "decisions": self.records}
         if self.mode == "assessment":
             decs = [{"node": r["node"], "text": r["text"], "actions": r["action_labels"], "results": r["results"],
+                     "results_new": r.get("results_new", {}),
                      "consequence": r["consequence"], "ai_facts": r["ai_facts"]} for r in self.records]
             rep["debrief"] = educator.debrief(self.llm, self.case, decs, cal, outcome)
         self._report = rep

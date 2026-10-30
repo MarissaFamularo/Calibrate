@@ -21,9 +21,9 @@ MODE: practice (Socratic). Exchange {n} of at most {cap}.
 {instruction}
 "ai_use_line" (mandatory, one sentence): what the resident verified, took on faith, or ignored from the AI assistant at this decision, per the AI-USE FACTS. If they did not consult it, say so and whether that mattered here."""
 
-Q_INSTR = """Ask ONE probing question that makes the resident examine the weakest part of their reasoning or their use of the AI assistant. kind = "question". Do not reveal the answer."""
-TP_INSTR = """State the teaching point plainly in 2-4 sentences: what was right, what was wrong, and why, per the rubric. kind = "teaching_point"."""
-EITHER_INSTR = """If the resident's last reply shows they now understand the key point, state the teaching point plainly (kind = "teaching_point"). Otherwise ask ONE more probing question (kind = "question")."""
+Q_INSTR = """Pick the SINGLE most important gap (in clinical reasoning or AI use) and ask ONE short question about only that (1-2 sentences). No compound questions, no lists, do not combine unrelated issues. kind = "question". Do not reveal the answer."""
+TP_INSTR = """State the teaching point plainly in 2-4 sentences, focused on the one or two issues that matter most per the rubric: what was right, what was wrong, and why. kind = "teaching_point"."""
+EITHER_INSTR = """If the resident's last reply shows they now understand the key point, state the teaching point plainly (kind = "teaching_point"). Otherwise ask ONE more short question about the same issue (kind = "question")."""
 
 DEBRIEF = VOICE + """
 
@@ -123,10 +123,13 @@ def debrief(llm, case: dict, decisions: list[dict], calibration: dict, outcome: 
 
 def _facts_block(case: dict, node: str, d: dict, ai_facts: list[str]) -> str:
     res = "\n".join(f"- {k}: {v}" for k, v in (d.get("results") or {}).items()) or "- (none)"
+    new = "\n".join(f"- {k}: {v}" for k, v in (d.get("results_new") or {}).items())
     return (f"DECISION PROMPT: {case['nodes'][node]['prompt']}\n"
             f"RUBRIC: {case['rubrics'][node]}\n"
             f"RESIDENT SAID: {d['text']}\n"
             f"CLASSIFIED AS: {', '.join(d.get('actions') or []) or '(nothing specific)'}\n"
-            f"RESULTS RETURNED:\n{res}\n"
+            f"RESULTS THE RESIDENT HAD SEEN WHEN DECIDING (only refer to these):\n{res}\n"
+            + (f"RESULTS RETURNED AFTER THIS DECISION (resident saw them later):\n{new}\n" if new else "")
+            + 
             f"CONSEQUENCE: {d.get('consequence') or '(case continues)'}\n"
             "AI-USE FACTS:\n" + ("\n".join(f"- {f}" for f in ai_facts) or "- Did not consult the AI assistant."))
