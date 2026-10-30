@@ -71,6 +71,7 @@ Status: draft for author review. Items marked TBD = not yet supplied by author.
 - Correct: CTA optional (must check creatinine first); vein mapping BEFORE angiogram.
 - Detour (not a fail): angiogram before vein mapping -> mapping afterward shows inadequate vein -> second angiogram for treatment; rejoins at D4.
 - Wrong -> branch B2: go to OR for bypass without vein mapping.
+- BEST-CLI (assistant A3 cites it) supports endovascular only after vein mapping shows no adequate GSV; before vein status is known, surgery first is more appropriate on available data (Dictation 2).
 ### D4 Revascularization
 - Findings: three-vessel tibial disease; no single-segment GSV.
 - Correct: endovascular treatment of one tibial vessel (balloon angioplasty), supported by BEST-CLI given no adequate GSV.
