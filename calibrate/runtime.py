@@ -95,7 +95,8 @@ class CaseRun:
             msg = {"id": spec["id"], "topic": topic, "text": r["text"], "confidence": spec["confidence"],
                    "citation": spec.get("citation"), "info": r["info"]}
         else:
-            r = assistant.answer_offspec(self.llm, question, self._record(), self.cfg.max_regenerations)
+            r = assistant.answer_offspec(self.llm, question, self._record(), self.cfg.max_regenerations,
+                                         verify_with_model=self.cfg.verify_assistant_with_model)
             msg = {"id": None, "topic": topic, "text": r["text"], "confidence": assistant.OFFSPEC_CONFIDENCE,
                    "citation": None, "info": r["info"]}
         self.assistant_chat.append({"question": question, **msg})

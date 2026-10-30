@@ -46,7 +46,7 @@ def responder(case):
                     "medications": "Metformin; metoprolol; statin", "allergies": case["chart"]["allergies"],
                     "social_history": "Wears appropriate footwear.", "vitals_labs": "BP 140/70; A1c 11"}
         if role == "verifier":
-            return {"faithful": True, "problems": []} if "faithful" in props else {"problems": []}
+            return {"faithful": True, "problems": []} if "faithful" in props else {"problems": []}  # note audit + grounding
         if role == "note_review":
             return {k: True for k in props}
         if role == "assistant_route":

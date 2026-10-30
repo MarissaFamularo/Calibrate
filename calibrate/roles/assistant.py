@@ -9,7 +9,9 @@ from ..llm import strict_object
 OFFSPEC_CONFIDENCE = "Moderate"
 
 ROUTE_SYSTEM = """You route a clinician's question to an AI clinical assistant topic.
-Pick the single topic the question is mainly about, or "other" if none fits. Topics:
+Choose a topic ONLY if the question is specifically asking for that one thing (e.g., "What's his WIfI?", "Open or endo?", "What LDL goal?", "Should he be on aspirin?", "Is his creatinine OK for contrast?").
+Broad or general questions go to "other": overall workup, what to order next, next steps, differential, general management, how to treat a diabetic foot ulcer, anything covering several topics.
+Topics:
 {topics}"""
 
 RENDER_SYSTEM = """You are an ambient clinical AI assistant embedded in the EHR, answering a clinician.
@@ -21,12 +23,16 @@ Convey EXACTLY the CONTENT below in 1-3 natural sentences that respond to the cl
 - If a CITATION is given, mention it as the basis. If none is given, cite nothing.
 - Do not state a confidence level (the interface shows it)."""
 
-OFFSPEC_SYSTEM = """You are an ambient clinical AI assistant embedded in the EHR, answering a clinician about the current patient.
-Answer accurately and briefly (1-3 sentences) using ONLY the RECORD below (chart, interview/note, and resulted tests).
-- If the record does not contain what is asked, say it is not in the available record.
-- Do not mention any test result that is not in the record. You did not see the physical exam.
-- Do not cite guidelines, trials, or other sources. Do not state numbers that are not in the record.
+OFFSPEC_SYSTEM = """You are an ambient clinical decision-support AI embedded in the EHR, helping a vascular surgery resident with the current patient.
+Use the RECORD for patient-specific facts and your general medical knowledge for recommendations. Be useful: give a direct, practical answer (2-5 sentences, or a short list).
+- Never state a patient-specific finding, exam result, history, or test value that is not in the RECORD. If something needed has not been done or resulted, say so and recommend it if appropriate.
+- You did not see the physical exam.
+- Do not cite guidelines, trials, papers, or societies by name.
 - Do not state a confidence level (the interface shows it)."""
+
+GROUNDING_SYSTEM = """You check an AI assistant's RESPONSE against the patient RECORD.
+General medical knowledge, recommendations, and standard thresholds are fine.
+Problem = the response states a patient-specific fact (finding, exam result, history item, test value, diagnosis) that is NOT in the RECORD, or contradicts the RECORD."""
 
 FIDELITY_SYSTEM = """You check whether an AI assistant's RESPONSE faithfully conveys a fixed CONTENT statement.
 The content may be clinically wrong on purpose (training simulation): judge ONLY fidelity, never clinical correctness.
@@ -85,8 +91,9 @@ def render_spec(llm, output: dict, question: str | None, *, verify_with_model: b
     return {"text": out["text"], "info": info}
 
 
-def answer_offspec(llm, question: str, record: str, max_regenerations: int = 2) -> dict:
+def answer_offspec(llm, question: str, record: str, max_regenerations: int = 2, verify_with_model: bool = True) -> dict:
     schema = strict_object({"text": {"type": "string"}})
+    vschema = strict_object({"problems": {"type": "array", "items": {"type": "string"}}})
 
     def gen(feedback):
         msgs = [{"role": "system", "content": OFFSPEC_SYSTEM},
@@ -96,14 +103,15 @@ def answer_offspec(llm, question: str, record: str, max_regenerations: int = 2) 
         return llm.json("assistant", msgs, schema, "assistant_answer")
 
     def check(out):
-        probs = []
-        extra = unsupported_numbers(out["text"], record, question)
-        if extra:
-            probs.append(f"numbers not in the record: {sorted(extra)}")
         cites = unsupported_citations(out["text"], record, question)
         if cites:
-            probs.append(f"sources cited: {sorted(cites)}")
-        return probs
+            return [f"named sources cited: {sorted(cites)}"]
+        if not verify_with_model:
+            return []
+        v = llm.json("verifier", [{"role": "system", "content": GROUNDING_SYSTEM},
+                                  {"role": "user", "content": f"RECORD:\n{record}\n\nRESPONSE: {out['text']}"}],
+                     vschema, "grounding")
+        return [p for p in v["problems"] if p.strip()]
 
     def fallback(last):
         return {"text": "I can't answer that reliably from the available record."}

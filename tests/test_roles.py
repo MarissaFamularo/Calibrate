@@ -97,7 +97,7 @@ def test_assistant_must_carry_citation():
 
 def test_offspec_cannot_cite():
     llm = FakeLLM({"assistant": [{"text": "Per the 2024 guideline, yes."}] * 3})
-    r = assistant.answer_offspec(llm, "Is he a smoker?", "CHART: ...")
+    r = assistant.answer_offspec(llm, "Is he a smoker?", "CHART: ...", verify_with_model=False)
     assert "guideline" not in r["text"]
 
 
@@ -210,3 +210,10 @@ def test_alert_badge_and_unopened_fact():
     assert run.pending_alerts() == ["A1", "A7"]
     run.decide("plan")
     assert any("Alert A1 was available but not opened" in f for f in run.records[1]["ai_facts"])
+
+
+def test_offspec_ungrounded_patient_fact_regenerates():
+    llm = FakeLLM({"assistant": [{"text": "His toe pressure was 40, so order an angiogram."}, {"text": "Order ABI with toe pressures."}],
+                   "verifier": [{"problems": ["toe pressure 40 not in record"]}, {"problems": []}]})
+    r = assistant.answer_offspec(llm, "What next?", "CHART: no tests resulted")
+    assert r["text"] == "Order ABI with toe pressures." and r["info"]["attempts"] == 2

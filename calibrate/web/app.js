@@ -134,7 +134,9 @@ function renderAssistant() {
       m.citation ? `<span>Source: ${esc(m.citation)}</span>` : ""}${m.alert ? "<span>Alert</span>" : ""}</div>`;
     return `${q}<div class="ai-a ${m.alert ? "alert" : ""}">${esc(m.text)}${meta}</div>`;
   }).join("") : `<p class="empty">Ambient assistant. It has the chart and hears your conversation. Ask it anything.</p>`;
-  log.scrollTop = log.scrollHeight;
+  // Show the start of the newest exchange, so a long answer isn't scrolled past.
+  const qs = log.querySelectorAll(".ai-q, .ai-a.alert"), lastQ = qs[qs.length - 1];
+  log.scrollTop = lastQ ? lastQ.offsetTop - log.offsetTop - 8 : log.scrollHeight;
 }
 
 function renderChart() {
