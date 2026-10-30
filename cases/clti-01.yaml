@@ -26,6 +26,7 @@ exam_after_b1:
   wound: "The wound now probes to bone."
 
 patient_script:
+  reason_for_visit: "My doctor found a sore on my toe and sent me to you. I hadn't noticed it."  # assembled from the chart referral + wound_awareness; author to confirm
   wound_awareness: "I didn't notice it. My doctor found it."
   pain: "No, it doesn't hurt. No pain at rest, no cramping when I walk."
   work_footwear: "I have to wear a boot at work. Sometimes the boot gets wet."
@@ -106,6 +107,7 @@ terminal:
 
 # Patient-interview topics (keys of patient_script) as the patient model sees them.
 patient_topics:
+  reason_for_visit: "Why he is here today, what brings him in, chief complaint"
   wound_awareness: "Whether he knew about the wound / how it was found"
   pain: "Foot or leg pain, rest pain, cramping or pain with walking (claudication)"
   work_footwear: "Work, occupation, shoes or boots, footwear"
