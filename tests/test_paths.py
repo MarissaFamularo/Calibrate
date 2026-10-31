@@ -83,7 +83,9 @@ def test_angio_before_mapping_is_detour_not_fail():
     s = start()
     s.decide(["order_noninvasive"])
     s.decide(["ischemic_by_tp", "revasc_workup"])
-    r = s.decide(["angio_before_mapping"])
+    s.decide(["angio_before_mapping"])
+    assert s.node == "D3b" and "vein_mapping" not in s.orders  # stops at the angiogram result
+    r = s.decide(["order_vein_mapping"])
     assert s.node == "D4" and "detour_second_angiogram" in s.flags
     assert "vein_mapping" in r["results"]
 
@@ -177,6 +179,7 @@ def test_best_cli_misapplied_before_vein_known():
     s.decide(["revasc_workup"])
     assert s.query_assistant("revasc_strategy")["id"] == "A3"
     s.decide(["angio_before_mapping"])
+    s.decide(["order_vein_mapping"])
     assert s.query_assistant("revasc_strategy")["id"] == "A3b"
     cells = {i["id"]: i["cell"] for i in s.calibration()["items"]}
     assert cells["A3"] == "overreliance"
@@ -248,3 +251,24 @@ def test_lipid_panel_orderable_from_decision():
     s = start()
     r = s.decide(["order_noninvasive", "order_lipid_panel"])
     assert r["results"]["lipid_panel"] == "LDL 110 mg/dL"
+
+
+def test_endo_before_vein_mapping_returns_with_new_wound():
+    s = start()
+    s.decide(["order_noninvasive", "offloading"])
+    s.decide(["revasc_workup"])
+    s.decide(["angio_before_mapping"])
+    s.decide(["endo_tibial_before_mapping"])
+    assert s.node == "D5"
+    s.decide(ALL_RF)
+    o = s.outcome()
+    assert any("3 months later with another wound" in e for e in o["events"])
+
+
+def test_bypass_at_d3b_is_b2():
+    s = start()
+    s.decide(["order_noninvasive"])
+    s.decide(["revasc_workup"])
+    s.decide(["angio_before_mapping"])
+    s.decide(["bypass_without_mapping"])
+    assert s.outcome()["terminal_reason"] == "B2"

@@ -11,6 +11,7 @@ IDEAL = {
     "D2": ["noncompressible", "ischemic_by_tp", "wifi_correct", "revasc_workup"],
     "B1": ["order_xray", "revasc_workup"],
     "D3": ["order_creatinine", "order_vein_mapping", "order_angiogram"],
+    "D3b": ["order_vein_mapping"],
     "D4": ["endo_tibial"],
     "D5": ["statin_high_intensity", "antiplatelet", "smoking_cessation", "diabetes_management", "bp_management"],
 }

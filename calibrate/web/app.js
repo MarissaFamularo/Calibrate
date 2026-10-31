@@ -8,7 +8,7 @@ const EXAM = { wound: "Wound", periwound: "Skin around the wound", foot_temperat
   femoral_pulses: "Femoral pulses", popliteal_pulses: "Popliteal pulses", pedal_pulses: "Pedal pulses",
   monofilament: "Monofilament", footwear: "Footwear", other: "Exam" };
 const STEPS = [["ENCOUNTER", "Interview"], ["D1", "Visit 1"], ["D2", "Results"], ["B1", "2-week return"],
-  ["D3", "Workup"], ["D4", "Procedure"], ["D5", "Discharge"]];
+  ["D3", "Workup"], ["D3b", "Angiogram"], ["D4", "Procedure"], ["D5", "Discharge"]];
 const testName = (t) => TEST[t] || t.replace(/_/g, " ");
 
 let sid = null, S = null, noteKey = null, godOpen = null, busyN = 0;
@@ -68,10 +68,11 @@ function render() {
 function renderSteps() {
   const signed = new Set(S.signed_notes.filter((n) => n.status === "signed").flatMap((n) => n.covers || [n.node]));
   const now = S.phase === "done" ? null : S.node === "ENCOUNTER" ? (S.note ? "D1" : "ENCOUNTER") : S.node;
-  const visitedB1 = signed.has("B1") || now === "B1";
-  $("#steps").innerHTML = STEPS.filter(([k]) => k !== "B1" || visitedB1).map(([k, label]) => {
+  const visited = (k) => signed.has(k) || now === k;
+  const BR = ["B1", "D3b"];  // shown only when the case branches there
+  $("#steps").innerHTML = STEPS.filter(([k]) => !BR.includes(k) || visited(k)).map(([k, label]) => {
     const cls = k === now ? "now" : (signed.has(k) || (k === "ENCOUNTER" && S.note)) ? "done" : "";
-    return `<li class="${cls} ${k === "B1" ? "branch" : ""}" ${k === now ? 'aria-current="step"' : ""}>${label}</li>`;
+    return `<li class="${cls} ${BR.includes(k) ? "branch" : ""}" ${k === now ? 'aria-current="step"' : ""}>${label}</li>`;
   }).join("");
 }
 

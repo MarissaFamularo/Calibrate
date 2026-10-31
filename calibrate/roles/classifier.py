@@ -23,6 +23,7 @@ ACTIONS AVAILABLE HERE:
 
 FOLLOWUPS = {  # engine-requested follow-ups when a clear answer still leaves the node incomplete
     "D3": "Okay. What else before you treat him?",
+    "D3b": "So what exactly are you doing next?",
     "D4": "So what exactly are you doing for him?",
 }
 
@@ -71,6 +72,10 @@ def to_engine_actions(node: str, actions: list[str], prior_orders: list[str]) ->
             out.append("order_angiogram" if vein_done else "angio_before_mapping")
         elif node == "D4" and a == "bypass":
             out.append("bypass_prosthetic")
+        elif node == "D3b" and a == "endo_tibial":
+            out.append("endo_tibial_before_mapping")
+        elif node == "D3b" and a == "bypass":
+            out.append("bypass_without_mapping")
         else:
             out.append(a)
     return out

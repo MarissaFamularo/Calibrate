@@ -300,8 +300,8 @@ class CaseRun:
             return self.case["terminal"].get(self.s.terminal_reason) if self.s.terminal_reason else "Case complete."
         if nxt == "B1":
             return self.case["nodes"]["B1"]["prompt"]
-        if node == "D3" and "detour_second_angiogram" in self.s.flags:
-            return "Angiogram came before vein mapping; mapping afterward shows no adequate vein, so a second angiogram is needed for treatment."
+        if node in ("D3", "D3b") and "detour_second_angiogram" in self.s.flags:
+            return "Vein mapping after the angiogram shows no adequate vein, so a second angiogram is needed for treatment."
         return None
 
     def _ai_facts(self, pre_log: int, pre_alerts: list[str], acts: list[str]) -> list[str]:

@@ -61,7 +61,7 @@ assistant:
   A2: {kind: topic, topic: wifi, content: "WIfI W1 I0 fI1.", correct: false, confidence: High,
        adopt: [wifi_ischemia_0], override: [wifi_correct]}
   A3: {kind: topic, topic: revasc_strategy, when: vein_status_unknown, content: "Endovascular first; BEST-CLI supports an endovascular-first approach.", citation: "BEST-CLI", correct: false, confidence: High,
-       adopt: [angio_before_mapping], override: [vein_mapping_first]}
+       adopt: [angio_before_mapping, endo_tibial_before_mapping], override: [vein_mapping_first]}
   A3b: {kind: topic, topic: revasc_strategy, when: vein_status_known, content: "No adequate single-segment GSV; endovascular tibial intervention is reasonable (BEST-CLI).", citation: "BEST-CLI", correct: true, confidence: High,
         adopt: [endo_tibial], override: [bypass_prosthetic, bypass_cryo]}
   A4: {kind: topic, topic: lipid_goal, content: "Target LDL < 100 mg/dL.", correct: false, confidence: Moderate,
@@ -93,9 +93,15 @@ nodes:
        actions: [order_xray, order_mri, revasc_workup, no_revasc_workup]}
   D3: {prompt: "How do you work up his anatomy and plan revascularization?",
        actions: [order_creatinine, order_cta, vein_mapping_first, angio_before_mapping, order_angiogram, order_vein_mapping, bypass_without_mapping]}
+  D3b: {prompt: "Angiogram shows three-vessel tibial disease. What do you do next?",
+        actions: [order_vein_mapping, endo_tibial_before_mapping, bypass_without_mapping]}
   D4: {prompt: "Angiogram shows three-vessel tibial disease and vein mapping shows no adequate GSV. What do you do?",
        actions: [endo_tibial, bypass_prosthetic, bypass_cryo]}
   D5: {prompt: "Before discharge: what is your medical management plan?", actions: []}
+
+# Outcome events for non-terminal wrong turns (author's words).
+events:
+  endo_before_vein_mapping: "He was revascularized endovascularly before his vein was assessed. He came back 3 months later with another wound, and the whole workup started over."
 
 terminal:
   B1b: "He returns 2 weeks later with gas gangrene of the foot. Guillotine amputation, then a higher-level amputation."
@@ -147,6 +153,7 @@ notes:
   D2: "Noninvasive results note"
   B1: "2-week return visit note"
   D3: "Revascularization workup plan"
+  D3b: "Angiogram result"
   D4: "Procedure plan"
   D5: "Discharge note"
 
@@ -186,6 +193,7 @@ action_labels:
   decline_cta_renal: "Declines CTA because of kidney/contrast concern"
   endo_tibial: "Endovascular treatment of a tibial vessel (e.g., balloon angioplasty)"
   bypass: "Open surgical bypass (any conduit)"
+  endo_tibial_before_mapping: "Endovascular tibial treatment before vein mapping"
   order_lipid_panel: "Order a lipid panel"
   order_a1c: "Order an A1c"
   statin_high_intensity: "Start or intensify a high-intensity statin"
@@ -217,6 +225,7 @@ classifier_actions:
   D2: [noncompressible, ischemic_by_tp, wifi_correct, wifi_ischemia_0, revasc_workup, perfusion_adequate]
   B1: [order_xray, order_mri, revasc_workup, no_revasc_workup]
   D3: [order_creatinine, order_cta, order_vein_mapping, order_angiogram, bypass_without_mapping, decline_cta_renal]
+  D3b: [order_vein_mapping, endo_tibial, bypass]
   D4: [endo_tibial, bypass]
   D5: []
 
@@ -226,6 +235,7 @@ rubrics:
   D2: "Correct: recognize non-compressible ankle vessels; ischemia by toe pressure; WIfI W1 I3 fI1; proceed to revascularization workup. Wrong: accept ABI 1.7 as adequate perfusion."
   B1: "Wound now probes to bone. X-ray is the right test (osteomyelitis of the distal phalanx); MRI is not indicated when the wound probes to bone. Revascularization workup is still required; not pursuing it leads to gas gangrene."
   D3: "Correct: CTA optional, but creatinine must be checked first; vein mapping BEFORE angiogram. Angiogram before vein mapping is a detour (second angiogram needed), not a fail. Going to the OR for bypass without vein mapping is wrong. BEST-CLI support for endovascular-first applies only after vein mapping shows no adequate GSV: endovascular is appropriate ONLY if vein mapping was done and shows no adequate GSV; otherwise surgery first is more appropriate on available data (author, Dictation 2)."
+  D3b: "Angiogram before vein mapping is a detour, not a fail. Correct next step: vein mapping now, then a second angiogram for treatment. Should NOT treat at this point: young patient, vein not yet checked; endovascular is appropriate only if vein mapping shows no adequate GSV. Treating now is incorrect: he is revascularized but returns 3 months later with another wound and the whole workup starts over. Bypass without vein mapping is wrong."
   D4: "Three-vessel tibial disease and no single-segment GSV: endovascular treatment of one tibial vessel (balloon angioplasty), supported by BEST-CLI given no adequate GSV. Endovascular is appropriate only because vein mapping showed no adequate GSV."
   D5: "Correct: high-intensity statin regardless of LDL level; LDL goal <70 or <55 by risk; antiplatelet therapy; smoking cessation offered; diabetes management + endocrinology referral; BP management; AHA guideline-concordant. Resident manages, does not defer to PCP. Using the assistant for guideline lookup is expected and fine."
 

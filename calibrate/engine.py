@@ -203,10 +203,24 @@ class Session:
             return "D3", True  # unclear: classifier/educator asks a follow-up
         first_angio = self.orders.index("angiogram")
         if "vein_mapping" not in self.orders[:first_angio]:
-            self.flags.add("detour_second_angiogram")
             if "vein_mapping" not in self.orders:
-                results["vein_mapping"] = self.order("vein_mapping")
+                return "D3b", False  # stop at the angiogram result: what next?
+            self.flags.add("detour_second_angiogram")  # mapping planned after the angiogram
         return "D4", False
+
+    def _from_D3b(self, s, actions, results):
+        """Angiogram done before vein mapping: three-vessel tibial disease, vein status unknown."""
+        if "bypass_without_mapping" in s:
+            self.terminal_reason = "B2"
+            return TERMINAL, False
+        if "endo_tibial_before_mapping" in s:
+            # Author: revascularized, but returns 3 months later with another wound; marked incorrect.
+            self.flags.update({"revascularized", "endo_before_vein_mapping"})
+            return "D5", False
+        if "vein_mapping" in self.orders:
+            self.flags.add("detour_second_angiogram")
+            return "D4", False
+        return "D3b", True
 
     def _from_D4(self, s, actions, results):
         if s & {"bypass_prosthetic", "bypass_cryo"}:
@@ -261,6 +275,8 @@ class Session:
                     events.append(f"Wound healing was impaired ({why}); the toe did not heal despite revascularization. Second toe amputation.")
             else:
                 events.append("The wound healed.")
+            if "endo_before_vein_mapping" in self.flags:
+                events.append(self.case["events"]["endo_before_vein_mapping"])
         # Missed antiplatelet carries the same consequence as missed LDL management (author, Dictation 15).
         # After a major amputation the MI is reported once, by the postoperative rule below.
         mi_why = " and ".join(r for r, k in (("LDL not managed", "ldl"), ("antiplatelet not started", "antiplatelet")) if not ok[k])
