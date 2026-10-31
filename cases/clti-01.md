@@ -112,3 +112,13 @@ Status: draft for author review. Items marked TBD = not yet supplied by author.
 
 ## 10. Open items
 - Classifier check: ~10 tricky sample responses (negations, vague, multi-decision), written and labeled by Claude from this spec, run during build; author reviews only misreads.
+
+## 11. Author decisions, Oct 30 evening (playtest)
+- ABI/PVR and toe pressures can be obtained during visit 1 ("the patient should have an ABI at this visit"). If done in-visit, the visit-1 note's A/P covers D1 and D2 together (interpretation, WIfI, plan); the separate results note is skipped.
+- Angiogram before vein mapping stops at the result ("three-vessel tibial disease, what next?"), node D3b:
+  - Vein mapping -> no adequate GSV -> second angiogram for treatment -> D4.
+  - Treat endovascularly now (before vein mapping) -> marked incorrect; revascularized, but returns 3 months later with another wound and the whole workup restarts.
+  - Bypass without mapping -> B2.
+- Patient follows standardized-patient rules: unscripted questions = denies / normal; anything only a doctor could have told him = "nobody has told me." He knows his own PMH/meds from the chart (diabetes on metformin; HTN on metoprolol; no allergies).
+- Reason for visit (assembled from chart referral + wound awareness, author to confirm wording): "My doctor found a sore on my toe and sent me to you. I hadn't noticed it."
+- Chart care-gap notes (no antiplatelet, no endocrinology, lipid panel not checked, no prior imaging) are hidden from the resident and the AI scribe; the ambient assistant can still read them.
