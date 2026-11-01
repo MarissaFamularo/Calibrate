@@ -1,4 +1,4 @@
-# Calibrate demo script v1 (Nov 1) -- draft, author to approve VO and resident inputs
+# Calibrate demo script v1 (Nov 1). Visit-1 A/P approved by author Nov 1; VO wording still open to edits.
 
 | Time | Screen | Voiceover |
 |---|---|---|
@@ -13,7 +13,7 @@
 | 2:42-3:00 | Architecture graphic | Six roles on Muse Spark Open: patient, scribe, assistant, verifier, classifier, attending. Structured outputs, a verifier on every output, and a deterministic case engine that owns the truth. Synthetic patients only. Built during this hackathon. |
 
 ## Resident inputs
-Good run, visit-1 A/P (draft, author to approve):
+Good run, visit-1 A/P (approved by author, Nov 1):
 "58M DM (A1c 11), HTN, 1 ppd smoker with full-thickness 2nd toe ulcer. Non-compressible ankle vessels; ABI 1.7 not reliable. TP 23 with flattened digit waveforms = ischemia. WIfI W1 I3 fI1, CLTI. Plan: surgical shoe offloading; local wound care, I will manage; foot X-ray; revascularization workup with vein mapping; start high-intensity statin, aspirin; smoking cessation counseling; endocrinology referral and diabetes management; BP management."
 Note corrections: statin -> "prescribed, not taking"; add "smokes 1 ppd x 30 years"; footwear -> "work boot, sometimes wet."
 
