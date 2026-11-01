@@ -13,7 +13,12 @@ const testName = (t) => TEST[t] || t.replace(/_/g, " ");
 
 let sid = null, S = null, noteKey = null, godOpen = null, busyN = 0;
 
+const BUSY_LABEL = [[/\/talk$/, "Patient is answering"], [/\/(assistant|alert\/[^/]+)$/, "Assistant is thinking"],
+  [/\/finish_interview$/, "Ambient AI is drafting the note"], [/\/note$/, "Attending is reviewing your plan"],
+  [/\/educator$/, "Attending is thinking"], [/\/report$/, "Attending is writing up the case"]];
+let busyLabel = "Thinking";
 async function api(path, body, method = body === undefined ? "GET" : "POST") {
+  busyLabel = (BUSY_LABEL.find(([re]) => re.test(path)) || [, "Thinking"])[1];
   busy(+1);
   try {
     const r = await fetch(path, { method, headers: { "Content-Type": "application/json" },
@@ -30,12 +35,12 @@ async function api(path, body, method = body === undefined ? "GET" : "POST") {
 function busy(d) {
   busyN += d;
   const b = $("#busy");
-  if (!b.dataset.err) { b.textContent = "Thinking…"; b.hidden = busyN <= 0; }
+  if (!b.dataset.err) { b.innerHTML = `${esc(busyLabel)}<span class="dots"><i></i><i></i><i></i></span>`; b.hidden = busyN <= 0; }
   document.querySelectorAll("button, input, textarea").forEach((el) => { if (!el.closest(".tabs")) el.toggleAttribute("data-busy", busyN > 0); });
 }
 function flash(msg) {
   const b = $("#busy"); b.textContent = msg; b.dataset.err = "1"; b.hidden = false;
-  setTimeout(() => { delete b.dataset.err; b.hidden = busyN <= 0; b.textContent = "Thinking…"; }, 4500);
+  setTimeout(() => { delete b.dataset.err; b.hidden = busyN <= 0; busy(0); }, 4500);
 }
 
 /* ---------- start / routing ---------- */
@@ -194,7 +199,11 @@ $("#say-form").addEventListener("submit", async (ev) => {
   ev.preventDefault();
   const t = $("#say").value.trim(); if (!t || busyN) return;
   $("#say").value = "";
-  try { await api(`/api/${sid}/talk`, { text: t }); } catch { $("#say").value = t; }
+  const box = $("#encounter");
+  if (!S.encounter.length) box.innerHTML = "";
+  box.insertAdjacentHTML("beforeend", `<div class="line you">${esc(t)}</div><div class="line patient typing" aria-label="Patient is answering"><i></i><i></i><i></i></div>`);
+  box.scrollTop = box.scrollHeight;
+  try { await api(`/api/${sid}/talk`, { text: t }); } catch { $("#say").value = t; renderEncounter(); }
 });
 $("#finish-interview").addEventListener("click", () => api(`/api/${sid}/finish_interview`, {}));
 $("#clip-toggle").addEventListener("click", () => {
@@ -224,7 +233,11 @@ $("#ai-form").addEventListener("submit", async (ev) => {
   ev.preventDefault();
   const q = $("#ai-q").value.trim(); if (!q || busyN) return;
   $("#ai-q").value = "";
-  try { await api(`/api/${sid}/assistant`, { text: q }); } catch { $("#ai-q").value = q; }
+  const log = $("#ai-log");
+  if (!S.assistant_chat.length) log.innerHTML = "";
+  log.insertAdjacentHTML("beforeend", `<div class="ai-q">${esc(q)}</div><div class="ai-a typing" aria-label="Assistant is thinking"><i></i><i></i><i></i></div>`);
+  log.scrollTop = log.scrollHeight;
+  try { await api(`/api/${sid}/assistant`, { text: q }); } catch { $("#ai-q").value = q; renderAssistant(); }
 });
 $("#open-alert").addEventListener("click", () => api(`/api/${sid}/alert/${S.alerts_pending[0]}`, {}));
 
