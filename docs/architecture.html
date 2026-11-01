@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Calibrate architecture</title>
+<style>
+  :root { --ink:#1E2B33; --ink2:#4E5D66; --drape:#E3EBE6; --paper:#fff; --ai:#2D6A86; --aiw:#E6F0F4;
+          --god:#1C2142; --god2:#2A3060; --gold:#E9C77B; --gold2:#F6E7C2; --good:#2F7D4F; }
+  * { box-sizing: border-box; margin: 0; }
+  body { width: 1920px; height: 1080px; background: var(--drape); color: var(--ink);
+         font-family: "Public Sans", "Inter", "DejaVu Sans", system-ui, sans-serif; padding: 64px 80px; }
+  h1 { font-family: "Newsreader", Georgia, "DejaVu Serif", serif; font-weight: 600; font-size: 48px; letter-spacing: -.01em; }
+  .sub { font-size: 24px; color: var(--ink2); margin-top: 8px; }
+  .row { display: grid; grid-template-columns: 1fr 90px 1.25fr 90px 1fr; align-items: stretch; margin-top: 44px; height: 640px; }
+  .col { display: flex; flex-direction: column; gap: 22px; }
+  .box { background: var(--paper); border-radius: 14px; padding: 26px 28px; box-shadow: 0 1px 0 rgba(0,0,0,.04); }
+  .box h2 { font-size: 26px; font-weight: 700; margin-bottom: 10px; }
+  .box p, .box li { font-size: 20px; line-height: 1.45; color: var(--ink2); }
+  .box ul { padding-left: 22px; }
+  .truth { background: var(--ink); color: #fff; flex: 1; }
+  .truth h2 { color: #fff; } .truth p, .truth li { color: #D5DDD9; }
+  .tag { display: inline-block; font-size: 15px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+         padding: 5px 10px; border-radius: 6px; margin-bottom: 12px; }
+  .tag.h { background: var(--drape); color: var(--ink); } .tag.d { background: #33444F; color: var(--gold2); }
+  .tag.m { background: var(--ai); color: #fff; } .tag.r { background: var(--gold); color: var(--god); }
+  .muse { background: var(--aiw); border: 2px solid var(--ai); flex: 1; display: flex; flex-direction: column; }
+  .muse h2 { color: var(--ai); }
+  .roles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
+  .role { background: var(--paper); border-radius: 10px; padding: 14px 16px; }
+  .role b { display: block; font-size: 21px; color: var(--ink); }
+  .role span { font-size: 17px; color: var(--ink2); line-height: 1.35; }
+  .guard { margin-top: auto; background: var(--ai); color: #fff; border-radius: 10px; padding: 16px 18px; font-size: 18px; line-height: 1.45; }
+  .guard b { color: #fff; }
+  .out { background: var(--god); color: var(--gold2); flex: 1; }
+  .out h2 { color: var(--gold); } .out p, .out li { color: var(--gold2); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+  .grid2 div { border: 1.5px solid; border-radius: 8px; padding: 10px 12px; font-size: 16px; font-weight: 600; }
+  .g { border-color: #6FBF8B !important; } .b { border-color: #E07A6E !important; }
+  .arrow { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--ink2); }
+  .arrow svg { width: 70px; height: 34px; }
+  .arrow small { font-size: 16px; font-weight: 600; text-align: center; line-height: 1.25; }
+  .loop { margin-top: 30px; text-align: center; font-size: 21px; color: var(--ink2); }
+  .loop b { color: var(--ink); }
+  .foot { position: absolute; left: 80px; right: 80px; bottom: 48px; display: flex; justify-content: space-between; font-size: 18px; color: var(--ink2); }
+</style></head>
+<body>
+  <h1>The code owns the truth. The model renders the language.</h1>
+  <p class="sub">A simulation that measures how residents rely on AI. Six roles on Muse Spark Open, every output checked before the resident sees it.</p>
+
+  <div class="row">
+    <div class="col">
+      <div class="box"><span class="tag h">Clinician-authored</span><h2>Case spec</h2>
+        <p>Patient script, exam findings, every test result, the assistant's answers and their confidence, planted errors, rubrics, outcomes.</p></div>
+      <div class="box truth"><span class="tag d">Deterministic</span><h2>Case engine</h2>
+        <ul><li>Returns only spec'd results</li><li>Branches on the resident's plan</li><li>Scores every AI output</li><li>Decides the outcome</li></ul>
+        <p style="margin-top:14px">The model never invents a result, a citation, or an outcome.</p></div>
+    </div>
+
+    <div class="arrow"><svg viewBox="0 0 70 34"><path d="M2 17h58M48 5l14 12-14 12" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg><small>facts</small></div>
+
+    <div class="col">
+      <div class="box muse"><span class="tag m">Meta · open weights</span><h2>Muse Spark Open</h2>
+        <div class="roles">
+          <div class="role"><b>Patient</b><span>answers only from his script</span></div>
+          <div class="role"><b>Ambient scribe</b><span>drafts the note from the real interview</span></div>
+          <div class="role"><b>Assistant</b><span>right most of the time, wrong on purpose</span></div>
+          <div class="role"><b>Verifier</b><span>confirms only the planted error is present</span></div>
+          <div class="role"><b>Classifier</b><span>free-text plan → actions, or asks a follow-up</span></div>
+          <div class="role"><b>Attending</b><span>Socratic feedback and final verdict</span></div>
+        </div>
+        <div class="guard"><b>Every output:</b> strict JSON schema · fixed seed · no number or citation that isn't in the case · regenerate on failure, then fall back to fixed text</div>
+      </div>
+    </div>
+
+    <div class="arrow"><svg viewBox="0 0 70 34"><path d="M2 17h58M48 5l14 12-14 12" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg><small>language</small></div>
+
+    <div class="col">
+      <div class="box"><span class="tag h">Resident</span><h2>Works the case</h2>
+        <p>Interviews, examines, orders tests, asks the assistant or doesn't, opens alerts or doesn't, corrects and signs notes.</p></div>
+      <div class="box out"><span class="tag r">Measured</span><h2>Calibration profile</h2>
+        <div class="grid2"><div class="g">Appropriate reliance</div><div class="b">Reflexive dismissal</div>
+          <div class="b">Overreliance</div><div class="g">Appropriate override</div></div>
+        <p style="margin-top:14px">Plus outcome, per-decision verdicts, and a faculty view comparing residents.</p></div>
+    </div>
+  </div>
+
+  <p class="loop">The resident's signed plan goes back through the <b>classifier</b> to the <b>engine</b>. Errors left in a signed note stay in the chart, and the assistant reads them later.</p>
+
+  <div class="foot"><span>Built Oct 27 – Nov 4, 2026 · Meta Global AI Developer Hackathon · Build for Your World</span><span>Synthetic patients only</span></div>
+</body></html>

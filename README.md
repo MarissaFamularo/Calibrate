@@ -51,6 +51,8 @@ Every model call goes to **Muse Spark Open** (`meta-models/muse-spark-open-1026`
 | **Classifier** | Maps the free-text plan to the case's action options, or returns "unclear" and the attending asks a follow-up ("What exactly is your plan?") | Never guesses. Drives branching and scoring |
 | **Attending** | Socratic feedback in practice mode; a per-decision verdict and calibration summary at the end | Uses only results the resident had seen. Never invents numbers, never shows internal IDs, always includes a line on how the resident used the AI |
 
+![Architecture](docs/img/architecture.png)
+
 **The code owns the truth, and the model renders the language.** Test results, branching, scoring, and outcomes all come from the case spec through a deterministic engine. The model never decides a result, a citation, or an outcome. Every generated output passes deterministic guards before the resident sees it. On failure it regenerates with the problems as feedback, and after that it falls back to fixed text.
 
 ## Built during the hackathon
