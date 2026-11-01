@@ -7,13 +7,30 @@ import yaml
 
 from ..guards import generate_checked, unsupported_numbers
 from ..llm import strict_object
+import re
+
+_LEAK = re.compile(r"\b[AN]\d[a-z]?\b|\bN1-N3\b|planted|ai_use_line|error id", re.I)
+
+
+def leaks(text: str) -> list[str]:
+    """Internal IDs or scoring language that must never reach the resident."""
+    return sorted({m.group(0) for m in _LEAK.finditer(text)})
+
+
+def plain(text: str) -> str:
+    """Deterministic scrub for fallbacks: drop IDs and scoring words."""
+    text = re.sub(r"\s*\(?\b[AN]\d[a-z]?(?:\s*-\s*[AN]\d[a-z]?)?\b\)?", "", text)
+    text = re.sub(r"PLANTED ERROR", "wrong", text)
+    return re.sub(r"\bplanted\s+", "", text, flags=re.I).replace("  ", " ")
 
 MAX_EXCHANGES = 2
 
 VOICE = """You are a vascular surgery attending teaching a resident in a case simulation that also trains calibrated trust in an AI clinical assistant.
 Tone: brief, direct, no praise inflation, no filler. Talk to the resident ("you").
 Use ONLY the facts provided (rubric, what the resident did, results, consequences, AI-use facts). Do not invent findings, results, outcomes, citations, or numbers. Do not predict future outcomes.
-The AI assistant in this simulation is sometimes wrong on purpose. The AI-USE FACTS tell you which outputs were planted errors."""
+The AI assistant in this simulation is sometimes wrong on purpose. The AI-USE FACTS tell you which outputs were wrong.
+Speak like an attending, not a scorer: NEVER mention internal IDs (A1, A3, N1, N2, ...), never say "planted" or "error ID", and never refer to the simulation's design. Describe AI outputs in plain words ("the ABI alert", "the drafted note's medication list", "the assistant's endovascular-first advice").
+Keep "message" free of the AI-use sentence; that goes only in "ai_use_line"."""
 
 PRACTICE = VOICE + """
 
@@ -67,11 +84,17 @@ def socratic_turn(llm, case: dict, node: str, decision: dict, ai_facts: list[str
         extra = unsupported_numbers(out["message"] + " " + out["ai_use_line"], src)
         if extra:
             probs.append(f"numbers not in the case: {sorted(extra)}")
+        bad = leaks(out["message"] + " " + out["ai_use_line"])
+        if bad:
+            probs.append(f"remove internal IDs / scoring words {bad}; describe the AI output in plain words")
         return probs
 
     def fallback(last):
+        if last and not unsupported_numbers(last["message"] + " " + last["ai_use_line"], src) and last["ai_use_line"].strip():
+            return {"kind": last["kind"], "message": plain(last["message"].split("ai_use_line:")[0].strip()),
+                    "ai_use_line": plain(last["ai_use_line"])}
         return {"kind": "teaching_point", "message": decision.get("rubric") or case["rubrics"][node],
-                "ai_use_line": ai_facts[0] if ai_facts else "You did not consult the AI assistant at this decision."}
+                "ai_use_line": plain(ai_facts[0]) if ai_facts else "You did not consult the AI assistant at this decision."}
 
     out, info = generate_checked(gen, check, max_regenerations, fallback)
     return {**out, "info": info}
@@ -110,11 +133,14 @@ def debrief(llm, case: dict, decisions: list[dict], calibration: dict, outcome: 
         extra = unsupported_numbers(text, src)
         if extra:
             probs.append(f"numbers not in the case: {sorted(extra)}")
+        bad = leaks(text)
+        if bad:
+            probs.append(f"remove internal IDs / scoring words {bad}; describe AI outputs in plain words")
         return probs
 
     def fallback(last):
         return {"decisions": [{"node": d["node"], "feedback": case["rubrics"][d["node"]],
-                               "ai_use_line": (d["ai_facts"] or ["You did not consult the AI assistant."])[0]} for d in decisions],
+                               "ai_use_line": plain((d["ai_facts"] or ["You did not consult the AI assistant."])[0])} for d in decisions],
                 "overall": f"Calibration counts: {calibration['counts']}."}
 
     out, info = generate_checked(gen, check, max_regenerations, fallback)

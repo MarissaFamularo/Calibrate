@@ -252,3 +252,11 @@ def test_in_visit_abi_merges_d1_and_d2():
     run.submit_note("plan", run.note["text"])  # fake classifier returns ideal D1+D2 actions
     assert run.s.node == "D3" and run.records[-1]["covers"] == ["D1", "D2"]
     assert run.signed_notes[0]["covers"] == ["D1", "D2"]
+
+
+def test_educator_leak_guard():
+    from calibrate.roles.educator import leaks, plain
+    t = "You went against the planted AI alert A1 and signed N1-N3."
+    assert leaks(t)
+    assert not leaks(plain(t))
+    assert not leaks("Your ABI interpretation was correct; the toe pressure of 23 settles it.")
