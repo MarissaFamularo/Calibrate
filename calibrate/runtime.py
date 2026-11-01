@@ -270,7 +270,9 @@ class CaseRun:
             return self._report
         outcome, cal = self.s.outcome(), self.s.calibration()
         rep = {"mode": self.mode, "outcome": outcome, "calibration": cal, "decisions": self.records}
-        if self.mode == "assessment":
+        # Both modes get a per-decision verdict. In practice mode the Socratic exchange is coaching, not a verdict
+        # (its last turn may answer the resident's reply, or be an unanswered question), so it can't stand in the report.
+        if True:
             decs = [{"node": r["node"], "text": r["text"], "actions": r["action_labels"], "results": r["results"],
                      "results_new": r.get("results_new", {}), "rubric": r.get("rubric"), "prompt": r.get("prompt"),
                      "consequence": r["consequence"], "ai_facts": r["ai_facts"]} for r in self.records]
@@ -280,7 +282,7 @@ class CaseRun:
 
     def save(self, folder: str | Path = "sessions") -> Path:
         Path(folder).mkdir(exist_ok=True)
-        p = Path(folder) / f"{self.case['id']}_{self.mode}_{int(self.started)}.json"
+        p = Path(folder) / f"{self.case['id']}_{self.mode}_{int(self.started * 1000)}.json"  # ms: concurrent runs don't collide
         data = {"case": self.case["id"], "mode": self.mode, "started": self.started, "transcript": self.transcript,
                 "note": self.note, "signed_note": self.signed_text, "note_corrected": self.note_corrected,
                 "assistant_chat": self.assistant_chat, "records": self.records,

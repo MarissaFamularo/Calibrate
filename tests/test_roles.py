@@ -200,7 +200,7 @@ def test_full_session_practice_and_assessment():
         assert rep["outcome"]["healed"], rep["outcome"]
         assert len(rep["decisions"]) == 5
         assert any("N2" in f for f in rep["decisions"][0]["ai_facts"])
-        assert ("debrief" in rep) == (mode == "assessment")
+        assert "debrief" in rep  # both modes get a per-decision verdict
 
 
 def test_alert_badge_and_unopened_fact():
@@ -260,3 +260,4 @@ def test_educator_leak_guard():
     assert leaks(t)
     assert not leaks(plain(t))
     assert not leaks("Your ABI interpretation was correct; the toe pressure of 23 settles it.")
+    assert not leaks("Follow his A1c of 11.") and "A1c" in plain("Follow his A1c of 11 per alert A1.")

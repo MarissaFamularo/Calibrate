@@ -197,3 +197,23 @@ label { display: block; font-weight: 600; font-size: 13.5px; margin: 14px 0 6px;
   .steps { display: none; }
   .faculty-body { grid-template-columns: 1fr; }
 }
+
+/* resident's corrections to the AI-drafted note */
+.note-diff { margin: 6px 0 10px; padding: 8px 10px; border: 1px solid #AAB7B0; border-radius: 6px; background: #FBFAF6; font-size: 14px; }
+.note-diff strong { display: block; margin-bottom: 4px; font-size: 13px; }
+.note-diff div { padding: 2px 6px; border-radius: 3px; margin: 2px 0; white-space: pre-wrap; }
+.note-diff div span { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-right: 8px; }
+.note-diff .del { background: #FBE3E1; color: #7A1F17; text-decoration: line-through; text-decoration-color: #B3261E; }
+.note-diff .del span { text-decoration: none; display: inline-block; }
+.note-diff .add { background: #DFF1E4; color: #14532D; }
+
+/* plan addenda + faculty comparison */
+.dec .addendum { display: block; margin-top: 2px; }
+.compare-row { margin-bottom: 8px; }
+.saved li { display: flex; align-items: flex-start; gap: 8px; }
+.saved li .pick { padding-top: 14px; }
+.saved li > button { flex: 1; }
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.report.compact h2 { font-size: 24px; }
+.report.compact .events { min-height: 6.5em; }
+.report.compact .grid2 { grid-template-columns: 84px 1fr 1fr; }

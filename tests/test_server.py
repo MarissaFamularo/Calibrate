@@ -44,7 +44,7 @@ def _walk(mode, tmp_path):
 
 
 def test_practice_walk(tmp_path):
-    assert "debrief" not in _walk("practice", tmp_path)
+    assert "debrief" in _walk("practice", tmp_path)
 
 
 def test_assessment_walk(tmp_path):

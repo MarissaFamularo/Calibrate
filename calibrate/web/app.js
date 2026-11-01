@@ -115,6 +115,7 @@ function renderNote() {
     if (ht.dataset.src !== n.history) { ht.value = n.history; ht.dataset.src = n.history; }
   }
   ht.readOnly = !n.history_editable;
+  renderDiff();
   hw.querySelector("label").textContent = n.history_editable
     ? "History, drafted by the ambient AI. Review and correct it before signing."
     : "History (signed)";
@@ -160,6 +161,33 @@ function renderChart() {
   $("#results-count").textContent = S.results.length ? `(${S.results.length})` : "";
   $("#notes-count").textContent = S.signed_notes.length ? `(${S.signed_notes.length})` : "";
 }
+
+/* Line diff of the resident's edits against the AI draft (LCS), so corrections are visible. */
+function lineDiff(a, b) {
+  const A = a.split("\n"), B = b.split("\n"), m = A.length, n = B.length;
+  const L = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = m - 1; i >= 0; i--) for (let j = n - 1; j >= 0; j--)
+    L[i][j] = A[i] === B[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+  const out = []; let i = 0, j = 0;
+  while (i < m && j < n) {
+    if (A[i] === B[j]) { i++; j++; }
+    else if (L[i + 1][j] >= L[i][j + 1]) out.push(["-", A[i++]]);
+    else out.push(["+", B[j++]]);
+  }
+  while (i < m) out.push(["-", A[i++]]);
+  while (j < n) out.push(["+", B[j++]]);
+  return out.filter(([, t]) => t.trim());
+}
+function renderDiff() {
+  const ht = $("#note-history"), box = $("#note-diff");
+  const src = ht.dataset.src || "";
+  if (!S.note || !S.note.history_editable || !src) { box.hidden = true; return; }
+  const d = lineDiff(src, ht.value);
+  box.hidden = !d.length;
+  box.innerHTML = d.length ? `<strong>Your corrections to the AI draft</strong>` + d.map(([k, t]) =>
+    `<div class="${k === "-" ? "del" : "add"}"><span>${k === "-" ? "AI draft" : "You"}</span>${esc(t)}</div>`).join("") : "";
+}
+$("#note-history").addEventListener("input", renderDiff);
 
 /* ---------- encounter ---------- */
 $("#say-form").addEventListener("submit", async (ev) => {
@@ -255,7 +283,11 @@ async function openReport() {
 }
 
 const CELLS = { "appropriate reliance": "good", "appropriate override": "good", "overreliance": "bad", "reflexive dismissal": "bad" };
-function reportHtml(rep) {
+function planHtml(t) {
+  const parts = String(t || "").split(" / ");
+  return parts.map((x, i) => i ? `<span class="addendum"><b>Addendum:</b> ${esc(x)}</span>` : `<span>${esc(x)}</span>`).join("");
+}
+function reportHtml(rep, compact = false) {
   const items = rep.calibration.items, by = (c) => items.filter((i) => i.cell === c);
   const cell = (c) => { const xs = by(c); return `<div class="cell ${CELLS[c]}"><div class="lab">${c}</div><div class="n">${xs.length}</div>
     <div class="items">${xs.map((i) => esc(i.what)).join("<br>")}</div></div>`; };
@@ -265,8 +297,14 @@ function reportHtml(rep) {
   const decs = rep.decisions.map((d) => {
     const fb = deb[d.node] || (d.educator && d.educator.length ? { feedback: d.educator[d.educator.length - 1].message,
       ai_use_line: d.educator[d.educator.length - 1].ai_use_line } : null);
-    return `<div class="dec"><b>${esc(d.node)}</b> <span>${esc(d.text)}</span>${fb ? `<p>${esc(fb.feedback)}</p><p><i>${esc(fb.ai_use_line)}</i></p>` : ""}</div>`;
+    return `<div class="dec"><b>${esc(d.node)}</b> ${planHtml(d.text)}${fb ? `<p>${esc(fb.feedback)}</p><p><i>${esc(fb.ai_use_line)}</i></p>` : ""}</div>`;
   }).join("");
+  if (compact) return `<div class="report compact"><h2>What happened to him</h2>
+    <ul class="events">${rep.outcome.events.map((e) => `<li>${esc(e)}</li>`).join("")}</ul>
+    <h3>How the AI was used</h3>
+    <div class="grid2"><div></div><div class="hd">Followed it</div><div class="hd">Went against it</div>
+      <div class="hd">AI was right</div>${cell("appropriate reliance")}${cell("reflexive dismissal")}
+      <div class="hd">AI was wrong</div>${cell("overreliance")}${cell("appropriate override")}</div></div>`;
   return `<div class="report"><h2>What happened to him</h2>
     <ul class="events">${rep.outcome.events.map((e) => `<li>${esc(e)}</li>`).join("")}</ul>
     <h3>How you used the AI</h3>
@@ -281,13 +319,26 @@ function reportHtml(rep) {
 /* ---------- faculty ---------- */
 async function loadSaved() {
   const list = await api("/api/saved");
-  $("#saved-list").innerHTML = list.length ? list.map((s) => `<li><button data-name="${esc(s.name)}" ${s.finished ? "" : "disabled"}>
+  $("#saved-list").innerHTML = (list.length ? `<li class="compare-row"><button class="btn" id="compare" disabled>Compare 2 selected</button></li>` : "")
+    + (list.length ? list.map((s) => `<li><label class="pick"><input type="checkbox" value="${esc(s.name)}" ${s.finished ? "" : "disabled"}
+      aria-label="Select for comparison"></label><button data-name="${esc(s.name)}" ${s.finished ? "" : "disabled"}>
     ${esc(s.mode)} case, ${new Date(s.started * 1000).toLocaleString()}
     <small>${s.finished ? esc((s.events || []).join(" ")) : "Not finished"}</small></button></li>`).join("")
-    : `<li class="empty">No saved sessions yet.</li>`;
+    : `<li class="empty">No saved sessions yet.</li>`);
   document.querySelectorAll("#saved-list button[data-name]").forEach((b) => b.addEventListener("click", async () => {
     const rep = await api(`/api/saved/${b.dataset.name}`);
     $("#saved-report").innerHTML = reportHtml(rep);
   }));
+  const picks = () => [...document.querySelectorAll("#saved-list input:checked")].map((x) => x.value);
+  document.querySelectorAll("#saved-list input[type=checkbox]").forEach((c) => c.addEventListener("change", () => {
+    const p = picks();
+    if (p.length > 2) { c.checked = false; return; }
+    $("#compare").disabled = p.length !== 2;
+  }));
+  const cmp = $("#compare");
+  if (cmp) cmp.addEventListener("click", async () => {
+    const reps = await Promise.all(picks().map((n) => api(`/api/saved/${n}`)));
+    $("#saved-report").innerHTML = `<div class="compare">${reps.map((r) => reportHtml(r, true)).join("")}</div>`;
+  });
 }
 $("#faculty-home").addEventListener("click", (e) => { e.preventDefault(); location.hash = ""; location.reload(); });

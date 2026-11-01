@@ -9,7 +9,7 @@ from ..guards import generate_checked, unsupported_numbers
 from ..llm import strict_object
 import re
 
-_LEAK = re.compile(r"\b[AN]\d[a-z]?\b|\bN1-N3\b|planted|ai_use_line|error id", re.I)
+_LEAK = re.compile(r"\b(?!A1c\b)[AN]\d[a-z]?\b|\bN1-N3\b|planted|ai_use_line|error id", re.I)
 
 
 def leaks(text: str) -> list[str]:
@@ -19,7 +19,7 @@ def leaks(text: str) -> list[str]:
 
 def plain(text: str) -> str:
     """Deterministic scrub for fallbacks: drop IDs and scoring words."""
-    text = re.sub(r"\s*\(?\b[AN]\d[a-z]?(?:\s*-\s*[AN]\d[a-z]?)?\b\)?", "", text)
+    text = re.sub(r"\s*\(?\b(?!A1c\b)[AN]\d[a-z]?(?:\s*-\s*[AN]\d[a-z]?)?\b\)?", "", text)
     text = re.sub(r"PLANTED ERROR", "wrong", text)
     return re.sub(r"\bplanted\s+", "", text, flags=re.I).replace("  ", " ")
 
