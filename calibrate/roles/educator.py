@@ -44,7 +44,7 @@ EITHER_INSTR = """If the resident's last reply shows they now understand the key
 
 DEBRIEF = VOICE + """
 
-MODE: assessment debrief (end of case). For EACH decision listed, give "feedback" (2-4 sentences: what was right/wrong vs the rubric and why) and a mandatory "ai_use_line" (one sentence on how they used, verified, or ignored the AI assistant at that decision, per the AI-USE FACTS). Then "overall": 2-3 sentences on their calibration pattern across the case, citing the calibration counts. No questions."""
+MODE: assessment debrief (end of case). For EACH decision listed, give "feedback" (2-4 sentences: what was right/wrong vs the rubric and why) and a mandatory "ai_use_line" (one sentence on how they used, verified, or ignored the AI assistant at that decision, per the AI-USE FACTS). Then "overall": 2-3 sentences on their calibration pattern across the case: cite the calibration counts and name the specific AI outputs they followed or went against (in plain words). State only what the facts show. Do not speculate about why they trusted or distrusted the assistant, and do not claim patterns (e.g., "you verified less when it agreed with you") that the facts do not directly establish. No questions."""
 
 
 def _allowed_numbers_source(case: dict, *extra: str) -> str:
