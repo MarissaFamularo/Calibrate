@@ -122,3 +122,8 @@ Status: draft for author review. Items marked TBD = not yet supplied by author.
 - Patient follows standardized-patient rules: unscripted questions = denies / normal; anything only a doctor could have told him = "nobody has told me." He knows his own PMH/meds from the chart (diabetes on metformin; HTN on metoprolol; no allergies).
 - Reason for visit (assembled from chart referral + wound awareness, author to confirm wording): "My doctor found a sore on my toe and sent me to you. I hadn't noticed it."
 - Chart care-gap notes (no antiplatelet, no endocrinology, lipid panel not checked, no prior imaging) are hidden from the resident and the AI scribe; the ambient assistant can still read them.
+
+## 12. Author decisions, Nov 1 (playtest)
+- ABI/PVR result shows the numbers only ("Ankle vessels non-compressible; ABI 1.7."); the "waveforms provided" line is removed because no waveform is shown.
+- Pursuing a revascularization workup after the ABI alert counts as going against the alert (A1 override).
+- At the workup step, "treat endovascularly" means taking him for angiography (order_angiogram).

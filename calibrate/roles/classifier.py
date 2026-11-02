@@ -26,6 +26,12 @@ FOLLOWUPS = {  # engine-requested follow-ups when a clear answer still leaves th
     "D3b": "So what exactly are you doing next?",
     "D4": "So what exactly are you doing for him?",
 }
+# Second and later follow-ups at the same node: say what is missing (a test or a procedure) without naming it.
+FOLLOWUPS_AGAIN = {
+    "D3": "I still don't see an order that gets you to treatment. Name the specific imaging study or procedure you're ordering next.",
+    "D3b": "Name the specific test or procedure you're doing next.",
+    "D4": "Name the specific procedure you're doing for him.",
+}
 
 
 def vocabulary(case: dict, node: str, nodes: list[str] | None = None) -> list[str]:

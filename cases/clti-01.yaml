@@ -35,7 +35,7 @@ patient_script:
   diabetes_care: "My doctor wants to see how I do on just the metformin. I've never seen a diabetes specialist."
 
 orders:
-  abi_pvr: {result: "Ankle vessels non-compressible; ABI 1.7. PVR waveforms provided."}
+  abi_pvr: {result: "Ankle vessels non-compressible; ABI 1.7."}
   toe_pressure: {result: "Toe pressure 23 mmHg on the wound foot; flattened digit waveforms."}
   xray_foot: {result: "No osseous abnormality.", result_after_b1: "Abnormality of the distal phalanx of the second toe consistent with osteomyelitis, isolated to the toe."}
   creatinine: {result: "1.2 mg/dL"}
@@ -57,7 +57,7 @@ note_errors:
 # adopt / override: resident actions that count as following vs. rejecting this output.
 assistant:
   A1: {kind: alert, appears_after: abi_pvr, content: "ABI 1.7: perfusion adequate for healing.", correct: false, confidence: High,
-       adopt: [perfusion_adequate, enough_flow], override: [noncompressible, ischemic_by_tp]}
+       adopt: [perfusion_adequate, enough_flow], override: [noncompressible, ischemic_by_tp, revasc_workup]}
   A2: {kind: topic, topic: wifi, content: "WIfI W1 I0 fI1.", correct: false, confidence: High,
        adopt: [wifi_ischemia_0], override: [wifi_correct]}
   A3: {kind: topic, topic: revasc_strategy, when: vein_status_unknown, content: "Endovascular first; BEST-CLI supports an endovascular-first approach.", citation: "BEST-CLI", correct: false, confidence: High,
@@ -188,7 +188,7 @@ action_labels:
   order_creatinine: "Check creatinine / renal function"
   order_cta: "Order a CTA runoff"
   order_vein_mapping: "Order vein mapping (saphenous vein duplex)"
-  order_angiogram: "Order / perform an angiogram"
+  order_angiogram: "Order / perform an angiogram, including taking him for angiography to treat endovascularly (angioplasty / endovascular therapy)"
   bypass_without_mapping: "Take him to the OR for bypass now, without vein mapping"
   decline_cta_renal: "Declines CTA because of kidney/contrast concern"
   endo_tibial: "Endovascular treatment of a tibial vessel (e.g., balloon angioplasty)"

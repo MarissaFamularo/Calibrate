@@ -149,7 +149,8 @@ class CaseRun:
         self.applied.setdefault(node, []).extend(acts)
         texts = [t for w, t in dialog if w == "Resident"] + [text]
         if r["needs_followup"]:
-            q = classifier.FOLLOWUPS.get(node, "What else?")
+            asked = sum(1 for w, _ in dialog if w == "Attending")
+            q = classifier.FOLLOWUPS.get(node, "What else?") if asked == 0 else classifier.FOLLOWUPS_AGAIN.get(node, "Name the specific test or procedure you are ordering next.")
             self.pending[node] = dialog + [("Resident", text), ("Attending", q)]
             return {"node": node, "followup": q, "results": r["results"]}
         self.pending.pop(node, None)
