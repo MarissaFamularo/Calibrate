@@ -272,3 +272,16 @@ def test_bypass_at_d3b_is_b2():
     s.decide(["angio_before_mapping"])
     s.decide(["bypass_without_mapping"])
     assert s.outcome()["terminal_reason"] == "B2"
+
+
+def test_alert_override_scoped_to_its_visit():
+    """Accepting the ABI alert at visit 1, then ordering a workup at the 2-week return, stays overreliance."""
+    st = Session(CASE)
+    st.order("abi_pvr"); st.open_alert("A1"); st.sign_note(set())
+    st.decide(["offloading", "wound_care_self", "perfusion_adequate"])
+    if st.node == "D2":
+        st.decide(["perfusion_adequate"])
+    assert st.node == "B1"
+    st.decide(["order_xray", "revasc_workup"])
+    cells = {i["id"]: i["cell"] for i in st.calibration()["items"]}
+    assert cells["A1"] == "overreliance", cells

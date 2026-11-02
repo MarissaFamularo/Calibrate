@@ -127,3 +127,5 @@ Status: draft for author review. Items marked TBD = not yet supplied by author.
 - ABI/PVR result shows the numbers only ("Ankle vessels non-compressible; ABI 1.7."); the "waveforms provided" line is removed because no waveform is shown.
 - Pursuing a revascularization workup after the ABI alert counts as going against the alert (A1 override).
 - At the workup step, "treat endovascularly" means taking him for angiography (order_angiogram).
+- Workup orders written in an earlier note (visit 1, results, or 2-week return) are carried to the workup step and placed there, in the order written; the resident is not asked for them again.
+- Going against the ABI alert is judged at visit 1 only; a workup ordered at the 2-week return (after the toe is lost) is recovery, not an override.

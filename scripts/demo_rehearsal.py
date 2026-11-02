@@ -16,7 +16,7 @@ INTERVIEW = ["What brings you in today?", "Are you taking all your medications?"
              "What kind of shoes do you wear at work?", "Checking his pedal pulses.", "Getting an ABI and toe pressures now."]
 
 GOOD = {
-  "pre_note_assistant": ["What antiplatelet should he be on?", "How should I manage his blood pressure?", "How should I help him quit smoking?"],
+  "pre_note_assistant": ["Should we go endovascular first for him?", "What antiplatelet should he be on?", "How should I manage his blood pressure?", "How should I help him quit smoking?"],
   "corrections": [(r"Statin[^\n,]*", "Statin (prescribed, NOT taking)"), (r"(?m)^Social history:.*$", "Social history: Smokes 1 ppd x 30 years. Wears a work boot at work that sometimes gets wet.")],
   "ap": {
     "D1": "58M DM (A1c 11), HTN, 1 ppd smoker with full-thickness 2nd toe ulcer. Non-compressible ankle vessels; ABI 1.7 not reliable. TP 23 with flattened digit waveforms = ischemia. WIfI W1 I3 fI1, CLTI. Plan: surgical shoe offloading; local wound care, I will manage; foot X-ray; revascularization workup with vein mapping; start high-intensity statin, aspirin; smoking cessation counseling; endocrinology referral and diabetes management; BP management.",
@@ -24,7 +24,7 @@ GOOD = {
     "D4": "No adequate GSV. Angiogram with endovascular treatment of one tibial vessel, balloon angioplasty.",
     "D5": "Atorvastatin 80 mg, LDL goal <55. Aspirin 81 mg. Smoking cessation counseling and nicotine replacement. Endocrinology referral and diabetes management, I will follow A1c. BP management. Continue surgical shoe offloading and wound care.",
   },
-  "assistant_at": {"D3": ["Should we go endovascular first for him?"]},
+  "assistant_at": {},
 }
 OVER = {
   "pre_note_assistant": [],

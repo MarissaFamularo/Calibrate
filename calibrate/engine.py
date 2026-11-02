@@ -303,7 +303,10 @@ class Session:
             correct = o["correct"]
             if oid in seen:
                 last = None
-                for a in acts:
+                # score_nodes: judge the response only at the decisions where the output applied (e.g., the ABI
+                # alert at visit 1); a later recovery after the consequence is not an override of the alert.
+                scope = o.get("score_nodes")
+                for a in ([a for n, a in self.actions if n in scope] if scope else acts):
                     if a in o["adopt"]:
                         last = "adopt"
                     elif a in o["override"]:

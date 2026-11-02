@@ -32,6 +32,8 @@ class CaseRun:
         self.records: list[dict] = []
         self.pending: dict[str, list] = {}      # node -> follow-up dialog
         self.applied: dict[str, list] = {}      # node -> actions already applied this visit
+        self.carried_d3: list[str] = []         # workup orders written in an earlier note, applied on reaching D3
+        self.carried_from: str | None = None
         self.exchanges: list[tuple[str, str]] = []
         self._seg_start = 0
         self._reported_alerts: set[str] = set()
@@ -125,14 +127,27 @@ class CaseRun:
             raise ValueError("case is over")
         dialog = self.pending.get(node, [])
         merged = self._merged_visit1()
+        # Notes before the workup step also listen for workup orders (vein mapping, angiogram, CTA, creatinine,
+        # bypass): a resident who plans ahead shouldn't have those silently dropped. They are applied on reaching D3.
+        pre_d3 = node in ("D1", "D2", "B1")
+        extra = ["D3"] if pre_d3 else []
         if merged:  # ABI/toe pressures done during visit 1: this note decides D1 and D2 together
-            c = classifier.classify(self.llm, self.case, node, text, dialog, nodes=["D1", "D2"],
+            c = classifier.classify(self.llm, self.case, node, text, dialog, nodes=["D1", "D2"] + extra,
                                     prompt=self.case["merged_visit1_prompt"])
         else:
-            c = classifier.classify(self.llm, self.case, node, text, dialog)
+            c = classifier.classify(self.llm, self.case, node, text, dialog, nodes=[node] + extra if extra else None)
         if c["status"] == "unclear":
             self.pending[node] = dialog + [("Resident", text), ("Attending", c["followup"])]
             return {"node": node, "followup": c["followup"]}
+        if pre_d3:
+            d3v = set(self.case["classifier_actions"]["D3"])
+            carried = [a for a in c["actions"] if a in d3v]
+            c["actions"] = [a for a in c["actions"] if a not in d3v]
+            if carried:
+                self.carried_d3 = list(dict.fromkeys(self.carried_d3 + carried))
+                self.carried_from = self.case["notes"].get(node, node)
+                if "revasc_workup" not in c["actions"]:
+                    c["actions"].append("revasc_workup")  # ordering the anatomic workup is a revascularization workup
         acts = classifier.to_engine_actions(node, c["actions"], self.s.orders)
         acts = [a for a in acts if a not in self.applied.get(node, [])]
         pre_log, pre_alerts = len(self.s.log), list(self.s.alerts_shown)
@@ -196,8 +211,31 @@ class CaseRun:
         return t
 
     # ---------- notes (plans live in the note) ----------
+    def _apply_carried(self) -> None:
+        """On reaching D3, place workup orders the resident already wrote in an earlier note. Runs after the
+        previous decision's attending exchange is finished, so feedback stays on that decision."""
+        if self.s.node != "D3" or not self.carried_d3 or self.educator_open():
+            return
+        acts = classifier.to_engine_actions("D3", self.carried_d3, self.s.orders)
+        self.carried_d3 = []
+        seen_before = dict(self.results)
+        r = self.s.decide(acts)
+        self.results.update(r["results"])
+        if r["needs_followup"]:  # orders placed, but nothing yet that gets to treatment: the D3 note continues
+            self.applied.setdefault("D3", []).extend(acts)
+            return
+        src = self.signed_notes[-1]["ap"] if self.signed_notes else ""
+        self.records.append({"node": "D3", "covers": ["D3"], "rubric": self.case["rubrics"]["D3"],
+                             "prompt": self.case["nodes"]["D3"]["prompt"],
+                             "text": f"(Ordered in the {self.carried_from or 'earlier'} note) {src}", "actions": acts,
+                             "action_labels": [self.case["action_labels"].get(a, a) for a in acts],
+                             "results": seen_before, "results_new": dict(r["results"]),
+                             "consequence": self._consequence("D3"), "ai_facts": [], "carried": True})
+        self._seg_start = len(self.s.log)
+
     def current_note(self) -> dict | None:
         """The note the resident must write/sign now, or None (interview not finished / case over)."""
+        self._apply_carried()
         node = self.s.node
         if node == TERMINAL or (node == "ENCOUNTER" and self.note is None):
             return None
@@ -250,6 +288,7 @@ class CaseRun:
 
     def state(self) -> dict:
         # Chart notes (care-gap cues) are hidden from the resident; the assistant still reads them.
+        self._apply_carried()
         node = self.s.node
         phase = ("done" if node == TERMINAL else "interview" if self.note is None
                  else "educator" if self.educator_open() else "note")

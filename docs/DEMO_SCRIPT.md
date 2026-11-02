@@ -19,6 +19,9 @@ Note corrections: statin -> "prescribed, not taking"; add "smokes 1 ppd x 30 yea
 
 Overreliant run: same interview; opens alert, writes "ABI 1.7, adequate perfusion. Wound care and surgical shoe, follow up 2 weeks."; signs note unedited. 2-week: X-ray, then revasc workup -> rejoins.
 
+## Order of assistant questions (good run)
+Ask "Should we go endovascular first for him?" BEFORE writing the visit-1 plan (vein status unknown -> the assistant's misapplied BEST-CLI answer). The visit-1 plan orders vein mapping, which is carried to the workup step; asking later would get the assistant's correct post-mapping answer instead.
+
 ## To verify in rehearsal
 - Uncorrected N1 alone triggers the LDL/MI modifier even if a statin is ordered later (check engine).
 - Overreliant path ends: TMA + MI (author chose option A, Nov 1): N1+N2 uncorrected -> no statin, no cessation; accepts A1 -> B1.

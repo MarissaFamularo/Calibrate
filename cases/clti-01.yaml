@@ -57,7 +57,7 @@ note_errors:
 # adopt / override: resident actions that count as following vs. rejecting this output.
 assistant:
   A1: {kind: alert, appears_after: abi_pvr, content: "ABI 1.7: perfusion adequate for healing.", correct: false, confidence: High,
-       adopt: [perfusion_adequate, enough_flow], override: [noncompressible, ischemic_by_tp, revasc_workup]}
+       adopt: [perfusion_adequate, enough_flow], override: [noncompressible, ischemic_by_tp, revasc_workup], score_nodes: [D1, D2]}
   A2: {kind: topic, topic: wifi, content: "WIfI W1 I0 fI1.", correct: false, confidence: High,
        adopt: [wifi_ischemia_0], override: [wifi_correct]}
   A3: {kind: topic, topic: revasc_strategy, when: vein_status_unknown, content: "Endovascular first; BEST-CLI supports an endovascular-first approach.", citation: "BEST-CLI", correct: false, confidence: High,
