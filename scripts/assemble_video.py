@@ -38,20 +38,28 @@ def still(name, img, dur, caps=()):
 
 def face(name, src, dur):
     out = SEG / f"{name}.mp4"
+    lower = (f"drawtext=fontfile={FONT}:text='{esc('Marissa Famularo, DO  ·  Vascular surgeon  ·  Associate Program Director')}':"
+             "fontsize=36:fontcolor=white:box=1:boxcolor=0x1C2142@0.85:boxborderw=18:x=60:y=h-130:enable='between(t,1,6)'")
     subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-t", str(dur), "-i", str(src), "-vf",
-                    "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,fps=30", *ENC, str(out)], check=True)
+                    "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,fps=30," + lower, *ENC, str(out)], check=True)
     return out
+
+def duration(path):
+    return float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(path)],
+                                capture_output=True, text=True).stdout.strip())
 
 ap = argparse.ArgumentParser(); ap.add_argument("--vo"); ap.add_argument("--hook"); a = ap.parse_args()
 G, F = V / "raw_good.webm", V / "raw_faculty.webm"
+HOOK = min(duration(a.hook), 36.0) if a.hook else 25.0
+SPARE = HOOK - 25.0  # taken back from the grid flash, faculty hold, and architecture so the cut stays 3:00
 import json
 B = {b["beat"].split(":")[0]: b["t"] for b in json.loads((V / "beats_good.json").read_text())}
 enc, badge, asked0 = B["encounter"], B["alert_badge"] - 3.0, B["alert_opened"] + 4.0
 draft, d3, d5 = B["note_draft"], B["note D3"], B["signed_D5"]
 sign1 = B["signed_D1"]
 parts = [
-    face("00_hook", a.hook, 25) if a.hook else still("00_hook", V / "title.png", 25),                    # 0:00-0:25
-    clip("01_grid", F, 12.3, 13.9, hold=5.4, caps=[(0.5, 6.8, "Calibrate measures how residents rely on AI")]),   # 0:25-0:32
+    face("00_hook", a.hook, HOOK) if a.hook else still("00_hook", V / "title.png", HOOK),
+    clip("01_grid", F, 12.3, 13.9, hold=5.4 - min(2.0, SPARE), caps=[(0.5, 6.8, "Calibrate measures how residents rely on AI")]),   # 0:25-0:32
     clip("02_encounter", G, enc, enc + 28, caps=[(0.5, 6, "Synthetic patient, played by Muse Spark Open")]),  # 0:32-1:00
     clip("03_alert", G, enc + 28, enc + 43, caps=[(0.3, 3.5, "The ambient assistant raises an alert")]),         # 1:00-1:15
     clip("04_note", G, draft, draft + 25, caps=[(0.3, 4.5, "AI-drafted note: the resident corrects it before signing")]),  # 1:15-1:40
@@ -59,17 +67,23 @@ parts = [
     clip("06a_ask", G, enc + 43, draft, speed=(draft - enc - 43) / 9.4, caps=[(0, 9.4, "Asks the assistant: endovascular first? (wrong)  ·  antiplatelet, BP, smoking (right, adopted)  ·  4×")]),
     clip("06b_workup", G, d3, d5, speed=(d5 - d3) / 10.9, caps=[(0, 5.4, "Vein mapping before angiogram  ·  no usable vein  →  tibial angioplasty  ·  5×"),
                                                          (5.4, 11, "Discharge: statin, antiplatelet, cessation, diabetes, BP  ·  5×")]),  # 1:55-2:15
-    clip("07_faculty", F, 0.0, 14.0, hold=13.0, caps=[(0.3, 5, "Faculty view: same case, two residents"),
-                                                       (14, 26.5, "Calibrated: wound healed  ·  Overreliant: toe, then TMA, then MI")]),        # 2:15-2:42
-    still("08_arch", Path("docs/img/architecture.png"), 18, caps=[(12, 17.8, "Built during the hackathon, Oct 27 – Nov 4, 2026")]),  # 2:42-3:00
+    clip("07_faculty", F, 0.0, 14.0, hold=13.0 - min(5.0, max(0.0, SPARE - 2.0)), caps=[(0.3, 5, "Faculty view: same case, two residents"),
+                                                       (14, 21.5, "Calibrated: wound healed  ·  Overreliant: toe, then TMA, then MI")]),        # 2:15-2:42
+    still("08_arch", Path("docs/img/architecture.png"), 18 - max(0.0, SPARE - 7.0), caps=[(9, 14.8, "Built during the hackathon, Oct 27 – Nov 4, 2026")]),  # 2:42-3:00
 ]
 lst = SEG / "list.txt"; lst.write_text("".join(f"file '{p.resolve()}'\n" for p in parts))
 silent = V / "calibrate_silent.mp4"
 subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "concat", "-safe", "0", "-i", str(lst), "-c", "copy", str(silent)], check=True)
 out = V / "calibrate_demo.mp4"
+ins, flt, n = ["-i", str(silent)], [], 0
+if a.hook:
+    ins += ["-i", a.hook]; n += 1; flt.append(f"[{n}:a]atrim=0:{HOOK},asetpts=PTS-STARTPTS,highpass=f=80,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000[a{n}]")
 if a.vo:
-    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(silent), "-i", a.vo, "-map", "0:v", "-map", "1:a",
-                    "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-shortest", str(out)], check=True)
+    ins += ["-i", a.vo]; n += 1; d = int(HOOK * 1000); flt.append(f"[{n}:a]highpass=f=80,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000,adelay={d}|{d}[a{n}]")
+if n:
+    mix = "".join(f"[a{i}]" for i in range(1, n + 1)) + (f"amix=inputs={n}:normalize=0:duration=longest[aout]" if n > 1 else "anull[aout]")
+    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", *ins, "-filter_complex", ";".join(flt + [mix]),
+                    "-map", "0:v", "-map", "[aout]", "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-t", str(duration(silent)), str(out)], check=True)
 else:
     silent.rename(out)
 d = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(out)],
