@@ -45,6 +45,7 @@
       <form class="say" id="say-form" autocomplete="off">
         <label for="say" class="sr">Speak to the patient or examine him</label>
         <input id="say" placeholder="Talk to him, examine him, or order a test">
+        <button class="mic" type="button" data-target="say" aria-label="Dictate (Muse Spark)" title="Dictate (Muse Spark)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-2.08A7 7 0 0 0 19 12h-2Z"/></svg></button>
         <button class="btn primary" type="submit">Say</button>
         <button class="btn" type="button" id="finish-interview">Finish interview and draft note</button>
       </form>
@@ -63,7 +64,7 @@
             <textarea id="note-history" rows="12"></textarea>
             <div class="note-diff" id="note-diff" hidden aria-live="polite"></div>
           </div>
-          <label for="note-ap">Assessment and plan</label>
+          <div class="ap-head"><label for="note-ap">Assessment and plan</label><button class="mic" type="button" data-target="note-ap" aria-label="Dictate (Muse Spark)" title="Dictate (Muse Spark)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-2.08A7 7 0 0 0 19 12h-2Z"/></svg></button></div>
           <textarea id="note-ap" rows="6"></textarea>
           <div class="clip-actions"><button class="btn primary" id="sign">Sign note</button></div>
         </div>
@@ -85,6 +86,7 @@
           <form class="ai-ask" id="ai-form" autocomplete="off">
             <label for="ai-q" class="sr">Ask the assistant</label>
             <input id="ai-q" placeholder="Ask the assistant">
+            <button class="mic" type="button" data-target="ai-q" aria-label="Dictate (Muse Spark)" title="Dictate (Muse Spark)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-2.08A7 7 0 0 0 19 12h-2Z"/></svg></button>
             <button class="btn small" type="submit">Ask</button>
           </form>
         </div>

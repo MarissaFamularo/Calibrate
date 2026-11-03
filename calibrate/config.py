@@ -39,6 +39,7 @@ class ModelConfig:
         "classifier": "medium",
         "note_review": "low",
         "educator": "low",
+        "dictation": "minimal",
     })
     # Model-based verification on top of deterministic string checks. Turn off to cut latency.
     verify_scribe_with_model: bool = True

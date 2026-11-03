@@ -15,7 +15,7 @@ let sid = null, S = null, noteKey = null, godOpen = null, busyN = 0;
 
 const BUSY_LABEL = [[/\/talk$/, "Patient is answering"], [/\/(assistant|alert\/[^/]+)$/, "Assistant is thinking"],
   [/\/finish_interview$/, "Ambient AI is drafting the note"], [/\/note$/, "Attending is reviewing your plan"],
-  [/\/educator$/, "Attending is thinking"], [/\/report$/, "Attending is writing up the case"]];
+  [/\/educator$/, "Attending is thinking"], [/\/report$/, "Attending is writing up the case"], [/\/api\/dictate$/, "Muse Spark is transcribing"]];
 let busyLabel = "Thinking";
 async function api(path, body, method = body === undefined ? "GET" : "POST") {
   busyLabel = (BUSY_LABEL.find(([re]) => re.test(path)) || [, "Thinking"])[1];
@@ -271,13 +271,13 @@ function openEducator() {
     : `<p class="reply">${esc(e.text)}</p>`).join("");
   if (last && last.kind === "question") {
     h += `<label for="god-reply" class="sr">Your answer</label><textarea id="god-reply" rows="3" placeholder="Answer the attending"></textarea>
-      <div class="god-row"><button class="btn primary" id="god-send">Answer</button></div>`;
+      <div class="god-row"><button class="mic" type="button" data-target="god-reply" aria-label="Dictate (Muse Spark)" title="Dictate (Muse Spark)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-2.08A7 7 0 0 0 19 12h-2Z"/></svg></button><button class="btn primary" id="god-send">Answer</button></div>`;
   } else {
     h += aiLine ? `<p class="ai-line">${esc(aiLine)}</p>` : "";
     h += `<div class="god-row"><button class="btn primary" id="god-ok">${S.phase === "done" ? "See how it went" : "Continue"}</button></div>`;
   }
   god(h);
-  const send = $("#god-send");
+  wireMics(); const send = $("#god-send");
   if (send) send.onclick = async () => {
     const t = $("#god-reply").value.trim(); if (!t) return;
     send.disabled = true;
@@ -355,3 +355,49 @@ async function loadSaved() {
   });
 }
 $("#faculty-home").addEventListener("click", (e) => { e.preventDefault(); location.hash = ""; location.reload(); });
+
+/* ---------- dictation (Muse Spark Open audio input) ---------- */
+// Records 16 kHz mono WAV in the browser; the server sends it to Muse Spark Open, and the transcript lands in the
+// input box for the resident to review. Nothing is submitted automatically.
+let rec = null;
+function wavB64(chunks, rate) {
+  const len = chunks.reduce((n, c) => n + c.length, 0), pcm = new Float32Array(len);
+  let o = 0; for (const c of chunks) { pcm.set(c, o); o += c.length; }
+  const ratio = rate / 16000, n = Math.floor(pcm.length / ratio), buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+  const w = (p, s) => [...s].forEach((ch, i) => v.setUint8(p + i, ch.charCodeAt(0)));
+  w(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); w(8, "WAVEfmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true);
+  v.setUint16(22, 1, true); v.setUint32(24, 16000, true); v.setUint32(28, 32000, true); v.setUint16(32, 2, true);
+  v.setUint16(34, 16, true); w(36, "data"); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) { const x = Math.max(-1, Math.min(1, pcm[Math.floor(i * ratio)])); v.setInt16(44 + i * 2, x < 0 ? x * 0x8000 : x * 0x7fff, true); }
+  let bin = ""; const u = new Uint8Array(buf); for (let i = 0; i < u.length; i += 0x8000) bin += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+async function micToggle(btn) {
+  const target = document.getElementById(btn.dataset.target);
+  if (rec && rec.btn === btn) {             // stop -> transcribe
+    const r = rec; rec = null;
+    r.proc.disconnect(); r.src.disconnect(); r.stream.getTracks().forEach((t) => t.stop()); r.ctx.close();
+    btn.classList.remove("rec"); btn.setAttribute("aria-label", "Dictate (Muse Spark)");
+    if (!r.chunks.length) return;
+    try {
+      const d = await api("/api/dictate", { audio: wavB64(r.chunks, r.ctx.sampleRate), field: btn.dataset.target });
+      if (d.text) { target.value = (target.value.trim() ? target.value.trimEnd() + " " : "") + d.text; target.dispatchEvent(new Event("input")); target.focus(); }
+    } catch { /* api() already flashed the error */ }
+    return;
+  }
+  if (rec) return;                           // one recording at a time
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const ctx = new AudioContext(), src = ctx.createMediaStreamSource(stream), proc = ctx.createScriptProcessor(4096, 1, 1);
+    const chunks = []; proc.onaudioprocess = (e) => chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+    src.connect(proc); proc.connect(ctx.destination);
+    rec = { btn, stream, ctx, src, proc, chunks };
+    btn.classList.add("rec"); btn.setAttribute("aria-label", "Stop dictation");
+  } catch { flash("Microphone not available. Allow mic access, or type instead."); }
+}
+function wireMics() {
+  document.querySelectorAll("button.mic:not([data-wired])").forEach((b) => {
+    b.dataset.wired = "1"; b.addEventListener("click", () => micToggle(b));
+  });
+}
+wireMics();

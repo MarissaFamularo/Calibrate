@@ -16,7 +16,7 @@ The skill they need is **calibrated trust**: knowing where each tool is reliable
 
 A resident works a synthetic patient through a branched vascular surgery case: a 58-year-old with diabetes, a toe ulcer, and chronic limb-threatening ischemia. The resident:
 
-1. **Interviews and examines the patient** in free text. The patient is played by a model that answers only from a scripted history.
+1. **Interviews and examines the patient** in free text, typed or dictated. The patient is played by a model that answers only from a scripted history.
 2. **Orders tests.** Results come only from the case spec. If a test isn't in the spec, the answer is "not available." If it's in the spec but not indicated, the answer says why.
 3. **Works with an ambient AI assistant**, modeled on the ambient scribes residents already use. It hears the interview, reads the chart, answers questions, and sometimes raises an alert. Opening an alert is optional, and whether the resident opens it is recorded.
 4. **Reviews and signs AI-drafted notes.** Each decision is an assessment and plan written into a note the resident signs. Uncorrected errors in a signed note stay in the chart, and the assistant reads them later.
@@ -40,7 +40,7 @@ The report also counts outputs the resident never consulted, alerts they never o
 
 ## How it uses Meta's models
 
-Every model call goes to **Muse Spark Open** (`meta-models/muse-spark-open-1026`, open weights, served through Baseten's OpenAI-compatible API). Each call returns structured output against a strict JSON schema, with a fixed seed. The model plays six roles:
+Every model call goes to **Muse Spark Open** (`meta-models/muse-spark-open-1026`, open weights, served through Baseten's OpenAI-compatible API). Each call returns structured output against a strict JSON schema, with a fixed seed. One model plays seven roles, including speech-to-text from the resident's own voice:
 
 | Role | What it does | How it's kept honest |
 |---|---|---|
@@ -49,6 +49,7 @@ Every model call goes to **Muse Spark Open** (`meta-models/muse-spark-open-1026`
 | **Assistant** | Routes each question to a case topic and renders the spec'd answer with its spec'd confidence; answers off-spec questions correctly from the record | No number or citation unless it's in the case. Regenerate on failure, then fall back to the spec text verbatim |
 | **Verifier** | Second check on scribe and assistant outputs | Runs on top of deterministic string checks |
 | **Classifier** | Maps the free-text plan to the case's action options, or returns "unclear" and the attending asks a follow-up ("What exactly is your plan?") | Never guesses. Drives branching and scoring |
+| **Dictation** | Turns the resident's speech into text in any input box (patient, assistant, note, attending), straight from audio | Audio in, strict JSON out. The transcript lands in the box for the resident to review; nothing is sent automatically |
 | **Attending** | Socratic feedback in practice mode; a per-decision verdict and calibration summary at the end | Uses only results the resident had seen. Never invents numbers, never shows internal IDs, always includes a line on how the resident used the AI |
 
 ![Architecture](docs/img/architecture.png)
@@ -94,7 +95,7 @@ Live checks:
 - **The answer key is public.** The planted errors are in this repo. Real use needs private case specs.
 - **Educational effect has not been studied.** This is a working instrument, not a validated assessment.
 - **Synthetic patients only; no PHI anywhere.** This is a training simulation. It is not a clinical tool and does not give medical advice.
-- Not yet built: dictation (Muse audio input), more cases, and a case-authoring agent.
+- Not yet built: more cases, spoken replies (text-to-speech), and a case-authoring agent.
 
 ## Author
 

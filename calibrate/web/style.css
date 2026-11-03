@@ -228,3 +228,16 @@ label { display: block; font-weight: 600; font-size: 13.5px; margin: 14px 0 6px;
 .line.patient.typing, .ai-a.typing { width: fit-content; padding-top: 12px; padding-bottom: 12px; }
 @keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .busy .dots i, .typing i { animation: none; opacity: .6; } }
+
+/* dictation */
+.mic { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid #AAB7B0; background: var(--paper);
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+.mic svg { width: 20px; height: 20px; fill: var(--ai); }
+.mic:hover { border-color: var(--ai); }
+.mic.rec { background: var(--alert); border-color: var(--alert); animation: micpulse 1.2s infinite; }
+.mic.rec svg { fill: #fff; }
+.ap-head { display: flex; align-items: center; justify-content: space-between; }
+.god .mic { background: #262C55; border-color: #4A5190; margin-right: 8px; }
+.god .mic svg { fill: var(--gold); }
+@keyframes micpulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(196,53,43,.5); } 50% { box-shadow: 0 0 0 8px rgba(196,53,43,0); } }
+@media (prefers-reduced-motion: reduce) { .mic.rec { animation: none; } }

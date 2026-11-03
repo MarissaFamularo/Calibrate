@@ -22,8 +22,8 @@
   .tag.m { background: var(--ai); color: #fff; } .tag.r { background: var(--gold); color: var(--god); }
   .muse { background: var(--aiw); border: 2px solid var(--ai); flex: 1; display: flex; flex-direction: column; }
   .muse h2 { color: var(--ai); }
-  .roles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
-  .role { background: var(--paper); border-radius: 10px; padding: 14px 16px; }
+  .roles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+  .role { background: var(--paper); border-radius: 10px; padding: 10px 14px; }
   .role b { display: block; font-size: 21px; color: var(--ink); }
   .role span { font-size: 17px; color: var(--ink2); line-height: 1.35; }
   .guard { margin-top: auto; background: var(--ai); color: #fff; border-radius: 10px; padding: 16px 18px; font-size: 18px; line-height: 1.45; }
@@ -42,7 +42,7 @@
 </style></head>
 <body>
   <h1>The code owns the truth. The model renders the language.</h1>
-  <p class="sub">A simulation that measures how residents rely on AI. Six roles on Muse Spark Open, every output checked before the resident sees it.</p>
+  <p class="sub">Seven roles on one open-weights model: text and audio in, structured JSON out, every output checked.</p>
 
   <div class="row">
     <div class="col">
@@ -64,6 +64,7 @@
           <div class="role"><b>Verifier</b><span>confirms only the planted error is present</span></div>
           <div class="role"><b>Classifier</b><span>free-text plan → actions, or asks a follow-up</span></div>
           <div class="role"><b>Attending</b><span>Socratic feedback and final verdict</span></div>
+          <div class="role" style="grid-column: span 2"><b>Dictation</b><span>the resident speaks; Muse Spark transcribes straight from audio</span></div>
         </div>
         <div class="guard"><b>Every output:</b> strict JSON schema · fixed seed · no number or citation that isn't in the case · regenerate on failure, then fall back to fixed text</div>
       </div>

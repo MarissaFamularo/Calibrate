@@ -50,6 +50,11 @@ class Text(BaseModel):
     text: str
 
 
+class Audio(BaseModel):
+    audio: str          # base64 WAV (16 kHz mono, built in the browser)
+    field: str = ""
+
+
 class Note(BaseModel):
     ap: str
     history: Optional[str] = None  # Optional, not str | None: pydantic evaluates this on Python 3.9 (macOS system Python)
@@ -123,6 +128,26 @@ def alert(sid: str, oid: str):
 @app.post("/api/{sid}/educator")
 def educator_reply(sid: str, body: Text):
     return _do(sid, lambda r: {k: v for k, v in r.educator_reply(body.text).items() if k != "info"})
+
+
+@app.post("/api/dictate")
+def dictate(body: Audio):
+    """Speech to text with Muse Spark Open audio input. Returns text for the resident to review."""
+    if len(body.audio) > 25_000_000:
+        raise HTTPException(413, "Recording too long. Keep dictation under a minute.")
+    from .roles import dictation
+    try:
+        return {"text": dictation.transcribe(DICTATION_LLM(), body.audio, body.field)}
+    except Exception as e:
+        raise HTTPException(502, f"Dictation failed ({type(e).__name__}). Type instead, or try again.")
+
+
+_dict_llm = None
+def DICTATION_LLM():
+    global _dict_llm
+    if _dict_llm is None:
+        _dict_llm = _llm()
+    return _dict_llm
 
 
 @app.get("/api/{sid}/report")

@@ -35,6 +35,8 @@ def responder(case):
     def r(role, messages, schema):
         sys, last = messages[0]["content"], messages[-1]["content"]
         props = schema.get("properties", {})
+        if role == "dictation":
+            return {"transcript": "Do you smoke?"}
         if role == "patient":
             q = last.split("latest question:")[-1]
             exam_words = ("check", "examine", "look at", "feel", "palpate", "monofilament")
