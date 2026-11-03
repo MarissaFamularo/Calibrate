@@ -185,7 +185,7 @@ label { display: block; font-weight: 600; font-size: 13.5px; margin: 14px 0 6px;
 .saved small { color: var(--ink-2); display: block; }
 #saved-report .report { background: var(--god); color: var(--gold-2); border-radius: 12px; padding: 24px 28px; }
 
-.busy { position: fixed; top: 62px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff;
+.busy { position: fixed; bottom: 18px; right: 24px; background: var(--ink); color: #fff;
   padding: 8px 16px; border-radius: 99px; font-size: 13.5px; z-index: 30; }
 
 @media (max-width: 900px) {

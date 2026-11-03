@@ -222,3 +222,7 @@ _to_delete/
 
 # Calibrate session logs
 sessions/
+
+# demo video build outputs (large)
+video/*
+!video/title.html
