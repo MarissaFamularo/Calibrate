@@ -251,6 +251,9 @@ document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("cli
 function god(html) {
   $("#god-content").innerHTML = html;
   const g = $("#god"); g.classList.add("open"); g.setAttribute("aria-hidden", "false");
+  // Long exchanges: keep the newest message and the answer/continue control in view.
+  const inner = g.querySelector(".god-inner");
+  if (inner && godOpen !== "report") setTimeout(() => { inner.scrollTop = inner.scrollHeight; }, 50);
   setTimeout(() => { const f = $("#god-content textarea, #god-content button"); if (f) f.focus(); }, 500);
 }
 function godClose() {

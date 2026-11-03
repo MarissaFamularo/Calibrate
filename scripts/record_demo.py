@@ -27,6 +27,26 @@ REPLY = {
 FIX = [("statin", "statin (prescribed, NOT taking)"),
        ("Social history:", "Social history: Smokes 1 ppd x 30 years. Work boot, sometimes wet. WAS:")]
 
+CLIPS = {"shoe": Path("video/src/dict_shoe.wav"), "abi": Path("video/src/dict_abi.wav")}
+# Virtual microphone for the recording: getUserMedia returns a stream that plays the author's recorded clip,
+# so the app's real dictation path (browser WAV -> /api/dictate -> Muse Spark Open) runs on her actual voice.
+VMIC = """
+window.__clip = null;
+navigator.mediaDevices.getUserMedia = async () => {
+  const ctx = new AudioContext(); const resp = await fetch(window.__clip);
+  const buf = await ctx.decodeAudioData(await resp.arrayBuffer());
+  const src = ctx.createBufferSource(); src.buffer = buf; const dest = ctx.createMediaStreamDestination();
+  src.connect(dest); src.start(); return dest.stream;
+};"""
+
+def dictate(page, target, clip):
+    page.evaluate(f"window.__clip = '/__clips/{clip}.wav'")
+    page.click(f'button.mic[data-target="{target}"]')
+    import wave
+    with wave.open(str(CLIPS[clip])) as w: dur = w.getnframes() / w.getframerate()
+    page.wait_for_timeout(int(dur * 1000) + 700)
+    page.click(f'button.mic[data-target="{target}"]'); idle(page); page.wait_for_timeout(1500)
+
 T0 = None
 beats = []
 def beat(name):
@@ -61,22 +81,32 @@ def attending(page, node):
         page.wait_for_selector("#god.open", timeout=180_000); idle(page)
         page.wait_for_timeout(2500)
         if page.query_selector("#god-reply"):
-            type_in(page, "#god-reply", REPLY.get(node, "I'm not sure."), delay=22)
-            page.wait_for_timeout(500); page.click("#god-send"); idle(page)
+            if node == "D1" and not getattr(attending, "dictated", False):
+                attending.dictated = True; dictate(page, "god-reply", "abi"); beat("dictated: attending answer")
+            else:
+                type_in(page, "#god-reply", REPLY.get(node, "I'm not sure."), delay=22)
+            page.wait_for_timeout(500); page.evaluate("document.getElementById('god-send').click()"); idle(page)
             continue
         page.wait_for_timeout(3500)
-        page.click("#god-ok"); page.wait_for_timeout(1200)
+        page.evaluate("document.getElementById('god-ok').click()"); page.wait_for_timeout(1200)
         return
 
 def good(p):
     global T0
     ctx = p.chromium.launch().new_context(viewport={"width": W, "height": H}, record_video_dir=str(OUT / "tmp_good"),
                                           record_video_size={"width": W, "height": H})
+    ctx.add_init_script(VMIC)
+    ctx.route("**/__clips/*", lambda r: r.fulfill(path=str(CLIPS[r.request.url.rsplit("/", 1)[1][:-4]]), content_type="audio/wav"))
     page = ctx.new_page(); T0 = time.time()
     page.goto(URL); page.wait_for_timeout(2500); beat("start_page")
     page.click('[data-mode="practice"]'); page.wait_for_timeout(1500); beat("encounter")
     for q in INTERVIEW:
-        type_in(page, "#say", q); page.keyboard.press("Enter"); idle(page); page.wait_for_timeout(1400)
+        if q.startswith("What kind of shoes"):
+            dictate(page, "say", "shoe"); beat("dictated: shoes")
+            page.click("#say"); page.keyboard.press("Enter")
+        else:
+            type_in(page, "#say", q); page.keyboard.press("Enter")
+        idle(page); page.wait_for_timeout(1400)
         beat(f"said: {q}")
     page.wait_for_selector("#open-alert:not([hidden])", timeout=60_000); page.wait_for_timeout(3000); beat("alert_badge")
     page.click("#open-alert"); idle(page); page.wait_for_timeout(4500); beat("alert_opened")

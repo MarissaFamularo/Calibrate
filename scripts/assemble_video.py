@@ -54,19 +54,21 @@ HOOK = min(duration(a.hook), 36.0) if a.hook else 25.0
 SPARE = HOOK - 25.0  # taken back from the grid flash, faculty hold, and architecture so the cut stays 3:00
 import json
 B = {b["beat"].split(":")[0]: b["t"] for b in json.loads((V / "beats_good.json").read_text())}
-enc, badge, asked0 = B["encounter"], B["alert_badge"] - 3.0, B["alert_opened"] + 4.0
+enc, badge, opened = B["encounter"], B["alert_badge"], B["alert_opened"]
 draft, d3, d5 = B["note_draft"], B["note D3"], B["signed_D5"]
-sign1 = B["signed_D1"]
+sign1, att_done = B["signed_D1"], B["attending_done_D1"]
 parts = [
     face("00_hook", a.hook, HOOK) if a.hook else still("00_hook", V / "title.png", HOOK),
     clip("01_grid", F, 12.3, 13.9, hold=5.4 - min(2.0, SPARE), caps=[(0.5, 6.8, "Calibrate measures how residents rely on AI")]),   # 0:25-0:32
-    clip("02_encounter", G, enc, enc + 28, caps=[(0.5, 6, "Synthetic patient, played by Muse Spark Open")]),  # 0:32-1:00
-    clip("03_alert", G, enc + 28, enc + 43, caps=[(0.3, 3.5, "The ambient assistant raises an alert")]),         # 1:00-1:15
+    clip("02_encounter", G, enc, badge, speed=(badge - enc) / 28, caps=[(0.5, 6, "Synthetic patient, played by Muse Spark Open"),
+        (12.5, 19.5, "Dictated: Muse Spark Open transcribes the resident's voice")]),
+    clip("03_alert", G, badge, badge + 15, caps=[(0.3, 3.5, "The ambient assistant raises an alert")]),         # 1:00-1:15
     clip("04_note", G, draft, draft + 25, caps=[(0.3, 4.5, "AI-drafted note: the resident corrects it before signing")]),  # 1:15-1:40
-    clip("05_attending", G, draft + 25, draft + 46, speed=1.4, caps=[(0.3, 4, "Practice mode: the attending weighs in")]),     # 1:40-1:55
-    clip("06a_ask", G, enc + 43, draft, speed=(draft - enc - 43) / 9.4, caps=[(0, 9.4, "Asks the assistant: endovascular first? (wrong)  ·  antiplatelet, BP, smoking (right, adopted)  ·  4×")]),
-    clip("06b_workup", G, d3, d5, speed=(d5 - d3) / 10.9, caps=[(0, 5.4, "Vein mapping before angiogram  ·  no usable vein  →  tibial angioplasty  ·  5×"),
-                                                         (5.4, 11, "Discharge: statin, antiplatelet, cessation, diabetes, BP  ·  5×")]),  # 1:55-2:15
+    clip("05_attending", G, draft + 25, att_done, speed=(att_done - draft - 25) / 18, caps=[(0.3, 3.5, "Practice mode: the attending weighs in"),
+        (4, 12.5, "Answer dictated, transcribed by Muse Spark Open")]),     # 1:40-1:55
+    clip("06a_ask", G, opened + 4, draft, speed=(draft - opened - 4) / 9.4, caps=[(0, 9.4, "Asks the assistant: endovascular first? (wrong)  ·  antiplatelet, BP, smoking (right, adopted)  ·  sped up")]),
+    clip("06b_workup", G, d3, d5, speed=(d5 - d3) / 7.9, caps=[(0, 4.0, "Vein mapping before angiogram  ·  no usable vein  →  tibial angioplasty  ·  sped up"),
+                                                         (4.0, 7.9, "Discharge: statin, antiplatelet, cessation, diabetes, BP  ·  sped up")]),  # 1:55-2:15
     clip("07_faculty", F, 0.0, 14.0, hold=13.0 - min(5.0, max(0.0, SPARE - 2.0)), caps=[(0.3, 5, "Faculty view: same case, two residents"),
                                                        (14, 21.5, "Calibrated: wound healed  ·  Overreliant: toe, then TMA, then MI")]),        # 2:15-2:42
     still("08_arch", Path("docs/img/architecture.png"), 18 - max(0.0, SPARE - 7.0), caps=[(9, 14.8, "Built during the hackathon, Oct 27 – Nov 4, 2026")]),  # 2:42-3:00
