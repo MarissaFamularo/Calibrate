@@ -1,4 +1,11 @@
-# Handoff (Sun Nov 1, 9:30 PM ET)
+# Handoff (Tue Nov 3, 8 PM ET)
+
+## Status Tue Nov 3
+- Dictation built (Muse Spark Open audio input, `input_audio` part + strict JSON; mic on every input). README + architecture say seven roles.
+- Demo video DONE: author's edit + end card = `Meta_Hackathon_final.mp4` on her Desktop (2:25, 1080p, -17.6 LUFS). Footage recorded live by `scripts/record_demo.py` (dictation via a virtual mic playing her recorded clips), assembled by `scripts/assemble_video.py`; she trimmed in iMovie.
+- Remaining (author): upload video (YouTube unlisted), submit on CV platform (repo + video link, Build for Your World), claim Meta API credits. Due Wed Nov 4, 9 PM ET. Repo verified public.
+
+# Previous handoff (Sun Nov 1, 9:30 PM ET)
 
 Submission due **Wed Nov 4, 9 PM ET** (CV platform: public repo + 3-min video link). Meta API credit claim due the same time. Tue Nov 3 = last full day for organizer help. No live deployment required (Modal cut).
 
