@@ -65,9 +65,9 @@ Built with Claude Code as the coding agent (confirmed allowed by the organizers)
 What exists now:
 - **Case engine** (`calibrate/engine.py`): decision nodes, branches with consequences and recovery, two terminal branches, outcome modifiers, and calibration scoring.
 - **Model roles** (`calibrate/roles/`), guards (`calibrate/guards.py`), and the runtime the UI calls (`calibrate/runtime.py`).
-- **Web app** (`calibrate/server.py`, `calibrate/web/`): patient scene, note clipboard with visible corrections, assistant panel with alerts, chart, attending panel, end report, and a faculty view that can compare two sessions side by side.
+- **Web app** (`calibrate/server.py`, `calibrate/web/`): patient scene, note clipboard with visible corrections, assistant panel with alerts, chart, attending panel, dictation (a mic on every input), end report, and a faculty view that can compare two sessions side by side.
 - **One fully branched case**, `cases/clti-01.md` (the human-readable spec) and `cases/clti-01.yaml` (what the engine reads).
-- **Tests:** 60 offline tests (`python3 -m pytest -q`) walk every branch and both modes through the API using a scripted stand-in model.
+- **Tests:** 61 offline tests (`python3 -m pytest -q`) walk every branch and both modes through the API using a scripted stand-in model.
 
 ## Run it
 
@@ -83,8 +83,13 @@ No API key? `CALIBRATE_FAKE=1 python3 -m uvicorn calibrate.server:app --port 800
 Live checks:
 - `scripts/demo_rehearsal.py good|over` plays the two demo residents end to end against the live model and prints outcome and calibration.
 - `scripts/run_classifier_check.py` measures classifier agreement.
+- `scripts/sweep.py terse|per_pcp|bypass|visit1_orders` plays four unscripted residents (typos, deferring to the PCP, bypass without vein mapping, orders written early) and flags loops or dead ends.
+- `scripts/record_demo.py` and `scripts/assemble_video.py` record the demo footage from the live app and cut the video.
 
 ## Evidence so far
+
+- **Dictation:** Muse Spark Open transcribed the author's recorded dictation verbatim (about 6 to 7 seconds per clip), including clinical terms (ABI, non-compressible, revascularization). The transcript goes into the input box for the resident to review; nothing is sent automatically.
+- **Unscripted sweep:** four differently behaved residents each reached the outcome the case rules define, with no follow-up loops.
 
 - **Classifier:** 30/30 agreement on a 10-item check set written from the case spec (3 repeats each; median 2.4 s per call). See `docs/classifier_check_results.md`. These items are one-line plans. Agreement on full note-length plans has not been measured yet.
 - **Demo runs:** a calibrated resident heals the wound (3 appropriate reliance, 5 appropriate override). An overreliant resident, on the same case, loses the toe, then needs a transmetatarsal amputation, then has an MI (6 overreliance).

@@ -15,7 +15,7 @@ Submission due **Wed Nov 4, 9 PM ET** (CV platform: public repo + 3-min video li
 3. README.md (rewritten Nov 1 to match the build)
 
 ## State
-- App is feature-complete for the demo. 62 offline tests pass.
+- App is feature-complete for the demo. 61 offline tests pass.
 - Both demo runs verified live (`scripts/demo_rehearsal.py good|over`): good = wound healed, 5 appropriate override + 3 appropriate reliance; overreliant = toe amputation -> TMA -> MI, 6 overreliance.
 - Unscripted sweep (`scripts/sweep.py terse|per_pcp|bypass|visit1_orders`): all four reach correct outcomes; no follow-up loops; no internal IDs in attending text.
 
