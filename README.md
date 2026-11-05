@@ -105,3 +105,7 @@ Live checks:
 ## Author
 
 Marissa Famularo, DO. Vascular surgeon, Associate Program Director (Vascular Surgery Residency), Medical Director of a Limb Preservation Program, and health data scientist.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
